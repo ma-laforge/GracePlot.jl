@@ -2,54 +2,70 @@
 #-------------------------------------------------------------------------------
 
 using GracePlot
-gp = GracePlot
 
-#Data
-#-------------------------------------------------------------------------------
+
+#==Input data
+===============================================================================#
 x=[-10:0.1:10]
 y2 = x.^2
 y3 = x.^3
 
 
-#Plot 1
-#-------------------------------------------------------------------------------
+#=="Defaults"
+===============================================================================#
+defltline = line(width=2.5, color=1)
+defltframeline = line(width=2.5)
+axes_loglin = axes(xscale = gconst[:log], yscale = gconst[:lin])
+
+
+#==Plot 1: Basics
+===============================================================================#
 plt = GracePlot.new()
 g = graph(plt, 0)
-	set(g, title = "Parabola", subtitle = "(\\f{Times-Italic}y=x\\f{}\\S2\\N)")
+	set(g, title = "Parabolas", subtitle = "(\\f{Times-Italic}y=+/- x\\f{}\\S2\\N)")
 	set(g, xlabel = text("Time (s)", color=2), ylabel = "Normalized height")
+	set(g, frameline = defltframeline)
 	set(g, unsupported = "no dice")
-	ds = add(g, x, y2)
+	ds = add(g, x, y2) #Use only Grace default line settings
+	ds = add(g, x, -y2, defltline)
 	autofit(g)
 
 #Finalize:
 redraw(plt)
 
 
-#Plot 2
-#-------------------------------------------------------------------------------
+#==Plot 2: Multi-plot
+===============================================================================#
 plt = GracePlot.new()
 	arrange(plt, (3, 2), offset=0.08, hgap=0.15, vgap=0.3)
 g = graph(plt, (1, 2))
 	txt = text("Parabola (\\f{Times-Italic}y=x\\f{}\\S2\\N)", size=2)
 	set(g, subtitle = txt)
-	ds = add(g, x, y2, glyph=glyph(_type=3, color=5, char=4))
-	plt.log = true
-		set(ds, glyph=glyph(color=5, skipcount=10))
-		set(ds, line=line(color=3))
-	plt.log = false
+	set(g, frameline = defltframeline)
+	ds = add(g, x, y2, glyph(_type=3, color=5, char=4), defltline)
+		set(ds, glyph(color=5, skipcount=10))
+		set(ds, line(color=3))
 	autofit(g)
 g = graph(plt, (0, 1))
 	set(g, subtitle = "Cubic Function (\\f{Times-Italic}y=x\\f{}\\S3\\N)")
-	ds = add(g, x, y3)
-		set(ds, line=line(_type=1, width=4, color=1))
+	set(g, frameline = defltframeline)
+	ds = add(g, x, y3, defltline)
+		set(ds, line(style=3, width=8, color=1)) #Overwrite defaults
 	autofit(g)
 	#autofit(g, x=true) #Not supported by Grace v5.1.23?
+g = graph(plt, (1, 1)) #Play around with another graph
+	plt.log = true
+	set(g, axes(xmin = 0.1, xmax = 1000, ymin = 1000, ymax = 5000))
+	set(g, axes_loglin, axes(inverty = gconst[:on]))
+	plt.log = false
 
 #Finalize:
 set(plt, focus=g)
 redraw(plt)
 
-save(plt, "sampleoutput.agr")
+
+#Other possible operations... but don't test here:
+#save(plt, "sampleoutput.agr")
 #sleep(1); close(plt)
 
 #Last line

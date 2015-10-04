@@ -3,8 +3,17 @@
 
 #==Plot-level functionality
 ===============================================================================#
+
+#-------------------------------------------------------------------------------
 redraw(p::Plot) = sendcmd(p, "REDRAW")
 
+#-------------------------------------------------------------------------------
+function save(p::Plot, path::String)
+	@assert !contains(path, "\"") "File path contains '\"'."
+	sendcmd(p, "SAVEALL \"$path\"")
+end
+
+#-------------------------------------------------------------------------------
 function arrange(p::Plot, gdim::GraphCoord; offset=0.08, hgap=0.15, vgap=0.2)
 	(rows, cols) = gdim
 	sendcmd(p, "ARRANGE($rows, $cols, $offset, $hgap, $vgap)")
@@ -17,20 +26,17 @@ function arrange(p::Plot, gdim::GraphCoord; offset=0.08, hgap=0.15, vgap=0.2)
 	end
 end
 
-function save(p::Plot, path::String)
-	@assert !contains(path, "\"") "File path contains '\"'."
-	sendcmd(p, "SAVEALL \"$path\"")
-end
-
  
 #==Graph-level functionality
 ===============================================================================#
 
+#-------------------------------------------------------------------------------
 function Base.kill(g::GraphRef)
 	gidx = graphindex(g)
 	sendcmd(g.plot, "KILL g$gidx")
 end
 
+#-------------------------------------------------------------------------------
 function setactive(g::GraphRef)
 	gidx = graphindex(g)
 	if gidx == g.plot.activegraph
@@ -40,57 +46,28 @@ function setactive(g::GraphRef)
 	sendcmd(g.plot, "WITH G$gidx")
 end
 
+#-------------------------------------------------------------------------------
 function setfocus(g::GraphRef)
 	gidx = graphindex(g)
 	sendcmd(g.plot, "FOCUS G$gidx")
 end
 
-#Set graph properties for a given element:
-function applypropchanges(g::GraphRef, fmap::PropertyCmdMap, prefix::String, data::Any)
+#Convenience functions: Enables the use of set(::Plot, ...) interface:
+#(Plot argument is otherwise redundant)
+#-------------------------------------------------------------------------------
+function setactive(p::Plot, g::GraphRef)
+	@assert p==g.plot "setactive: GraphRef does not match Plot to control."
 	setactive(g)
-
-	for prop in names(data)
-		v = eval(:($data.$prop))
-
-		if v != nothing
-			subcmd = get(fmap, prop, nothing)
-
-			if subcmd != nothing
-				if typeof(v) <: String; v = "\"$v\""; end#Quote the string
-				sendcmd(g.plot, "$prefix$subcmd $v")
-			else
-				dtype = typeof(data)
-				warn("Property \"$prop\" of $dtype not currently supported.")
-			end
-		end
-	end
 end
 
-const title_propertycmdmap = PropertyCmdMap([
-	(:value, "")
-	(:font, "FONT")
-	(:size, "SIZE")
-	(:color, "COLOR")
-])
-
-settitle(g::GraphRef, p::TextProp) = applypropchanges(g, title_propertycmdmap, "TITLE ", p)
-setsubtitle(g::GraphRef, p::TextProp) = applypropchanges(g, title_propertycmdmap, "SUBTITLE ", p)
-settitle(g::GraphRef, title::String) = settitle(g, text(title))
-setsubtitle(g::GraphRef, title::String) = setsubtitle(g, text(title))
-
-const label_propertycmdmap = PropertyCmdMap([
-	(:value, "")
-	(:font, "FONT")
-	(:size, "CHAR SIZE")
-	(:color, "COLOR")
-])
-
-setxlabel(g::GraphRef, p::TextProp) = applypropchanges(g, title_propertycmdmap, "XAXIS LABEL ", p)
-setylabel(g::GraphRef, p::TextProp) = applypropchanges(g, title_propertycmdmap, "YAXIS LABEL ", p)
-setxlabel(g::GraphRef, label::String) = setxlabel(g, text(label))
-setylabel(g::GraphRef, label::String) = setylabel(g, text(label))
+function setfocus(p::Plot, g::GraphRef)
+	@assert p==g.plot "setfocus: GraphRef does not match Plot to control."
+	setfocus(g)
+end
+#-------------------------------------------------------------------------------
 
 #NOTE: AUTOSCALE X/Y does not seem to work...
+#-------------------------------------------------------------------------------
 function autofit(g::GraphRef; x=false, y=false)
 	cmd = "AUTOSCALE"
 	if x && y
@@ -106,12 +83,57 @@ function autofit(g::GraphRef; x=false, y=false)
 	setactive(g)
 	sendcmd(g.plot, cmd)
 end
-
 autofit(g::GraphRef) = autofit(g, x=true, y=true)
+
+#-------------------------------------------------------------------------------
+const title_propertycmdmap = PropertyCmdMap([
+	(:value, "")
+	(:font, "FONT")
+	(:size, "SIZE")
+	(:color, "COLOR")
+])
+
+settitle(g::GraphRef, p::TextProp) = applypropchanges(g, title_propertycmdmap, "TITLE ", p)
+setsubtitle(g::GraphRef, p::TextProp) = applypropchanges(g, title_propertycmdmap, "SUBTITLE ", p)
+settitle(g::GraphRef, title::String) = settitle(g, text(title))
+setsubtitle(g::GraphRef, title::String) = setsubtitle(g, text(title))
+
+#-------------------------------------------------------------------------------
+const label_propertycmdmap = PropertyCmdMap([
+	(:value, "")
+	(:font, "FONT")
+	(:size, "CHAR SIZE")
+	(:color, "COLOR")
+])
+
+setxlabel(g::GraphRef, p::TextProp) = applypropchanges(g, title_propertycmdmap, "XAXIS LABEL ", p)
+setylabel(g::GraphRef, p::TextProp) = applypropchanges(g, title_propertycmdmap, "YAXIS LABEL ", p)
+setxlabel(g::GraphRef, label::String) = setxlabel(g, text(label))
+setylabel(g::GraphRef, label::String) = setylabel(g, text(label))
+
+#-------------------------------------------------------------------------------
+const frameline_propertycmdmap = PropertyCmdMap([
+	(:style, "LINESTYLE")
+	(:width, "LINEWIDTH")
+])
+setframeline(g::GraphRef, p::LineProp) = applypropchanges(g, frameline_propertycmdmap, "FRAME ", p)
+
+const axes_propertycmdmap = PropertyCmdMap([
+	(:xmin, "WORLD XMIN"), (:xmax, "WORLD XMAX"),
+	(:ymin, "WORLD YMIN"), (:ymax, "WORLD YMAX"),
+	(:xscale, "XAXES SCALE"),
+	(:yscale, "YAXES SCALE"),
+	(:invertx, "XAXES INVERT"),
+	(:inverty, "YAXES INVERT"),
+])
+setaxes(g::GraphRef, p::AxesProp) = applypropchanges(g, axes_propertycmdmap, "", p)
+
 
 #==Dataset-level functionality
 ===============================================================================#
-function add(g::GraphRef, x::DataVec, y::DataVec; kwargs...)
+
+#-------------------------------------------------------------------------------
+function add(g::GraphRef, x::DataVec, y::DataVec, args...; kwargs...)
 	@assert length(x) == length(y) "GracePlot.add(): x & y vlengths must match."
 	p = g.plot
 	gidx = graphindex(g)
@@ -126,117 +148,61 @@ function add(g::GraphRef, x::DataVec, y::DataVec; kwargs...)
 	end
 
 	ds = DatasetRef(g, dsid)
-	set(ds; kwargs...)
+	set(ds, args...; kwargs...)
 	return ds
 end
 
-function applylinepropchanges(ds::DatasetRef, fmap::PropertyCmdMap, data::Any)
-	dsid = ds.id
-	applypropchanges(ds.graph, fmap::PropertyCmdMap, "S$dsid ", data::Any)
-end
-
-const line_propertycmdmap = PropertyCmdMap([
+#-------------------------------------------------------------------------------
+const dsline_propertycmdmap = PropertyCmdMap([
 	(:_type, "LINE TYPE")
 	(:style, "LINE LINESTYLE")
 	(:width, "LINE LINEWIDTH")
 	(:color, "LINE COLOR")
 ])
-setline(ds::DatasetRef, p::LineProp) = applylinepropchanges(ds, line_propertycmdmap, p)
+setline(ds::DatasetRef, p::LineProp) = applydatasetpropchanges(ds, dsline_propertycmdmap, p)
 
+#-------------------------------------------------------------------------------
 const glyph_propertycmdmap = PropertyCmdMap([
 	(:_type, "SYMBOL")
 	(:size, "SYMBOL SIZE")
 	(:color, "SYMBOL COLOR")
 	(:skipcount, "SYMBOL SKIP")
 ])
-setglyph(ds::DatasetRef, p::GlyphProp) = applylinepropchanges(ds, glyph_propertycmdmap, p)
+setglyph(ds::DatasetRef, p::GlyphProp) = applydatasetpropchanges(ds, glyph_propertycmdmap, p)
 
 
-#==Cleaner "set" interface (minimal "export" count)
+#==Define cleaner "set" interface (minimize # of "export"-ed functions)
 ===============================================================================#
 
-#==Cleaner "set" interface providing plot-level functionality
-===============================================================================#
+#-------------------------------------------------------------------------------
+const empty_ptmap = PropTypeFunctionMap()
+const empty_fnmap = PropertyFunctionMap()
 
-#Convenience functions to use set(::Plot, ...) interface:
-function setactive(p::Plot, g::GraphRef)
-	@assert p==g.plot "setactive: GraphRef does not match Plot to control."
-	setactive(g)
-end
-function setfocus(p::Plot, g::GraphRef)
-	@assert p==g.plot "setfocus: GraphRef does not match Plot to control."
-	setfocus(g)
-end
-
-#Maps keyword arguments of the set function with the associated module function:
+#-------------------------------------------------------------------------------
 const setplot_fnmap = PropertyFunctionMap([
 	(:active, setactive)
 	(:focus, setfocus)
 ])
+set(g::Plot, args...; kwargs...) = set(g, empty_ptmap, setplot_fnmap, args...; kwargs...)
 
-#"set" interface for GraphRef:
-function set(p::Plot; kwargs...)
-	for (arg, value) in kwargs
-		setfn = get(setplot_fnmap, arg, nothing)
-
-		if setfn != nothing
-			setfn(p, value)
-		else
-			argstr = string(arg)
-			warn("Argument \"$argstr\" not recognized by \"set(::Plot, ...)\"")
-		end
-	end
-	return
-end
-
-#==Cleaner "set" interface providing graph-level functionality
-===============================================================================#
-
-#Maps keyword arguments of the set function with the associated module function:
+#-------------------------------------------------------------------------------
+const setgraph_ptmap = PropTypeFunctionMap([
+	(AxesProp, setaxes)
+])
 const setgraph_fnmap = PropertyFunctionMap([
 	(:title, settitle)
 	(:subtitle, setsubtitle)
 	(:xlabel, setxlabel)
 	(:ylabel, setylabel)
+	(:frameline, setframeline)
 ])
+set(g::GraphRef, args...; kwargs...) = set(g, setgraph_ptmap, setgraph_fnmap, args...; kwargs...)
 
-#"set" interface for GraphRef:
-function set(g::GraphRef; kwargs...)
-	for (arg, value) in kwargs
-		setfn = get(setgraph_fnmap, arg, nothing)
-
-		if setfn != nothing
-			setfn(g, value)
-		else
-			argstr = string(arg)
-			warn("Argument \"$argstr\" not recognized by \"set(::GraphRef, ...)\"")
-		end
-	end
-	return
-end
-
-#==Cleaner "set" interface providing dataset-level functionality
-===============================================================================#
-
-#Maps keyword arguments of the set function with the associated module function:
-const setline_fnmap = PropertyFunctionMap([
-	(:line, setline)
-	(:glyph, setglyph)
+#-------------------------------------------------------------------------------
+const setline_ptmap = PropTypeFunctionMap([
+	(LineProp, setline)
+	(GlyphProp, setglyph)
 ])
-
-#"set" interface for DatasetRef:
-function set(ds::DatasetRef; kwargs...)
-	for (arg, value) in kwargs
-		setfn = get(setline_fnmap, arg, nothing)
-
-		if setfn != nothing
-			setfn(ds, value)
-		else
-			argstr = string(arg)
-			warn("Argument \"$argstr\" not recognized by \"set(::DatasetRef, ...)\"")
-		end
-	end
-	return
-end
+set(g::DatasetRef, args...; kwargs...) = set(g, setline_ptmap, empty_fnmap, args...; kwargs...)
 
 #Last line

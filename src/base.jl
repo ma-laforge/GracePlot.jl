@@ -14,6 +14,20 @@ typealias PropertyCmdMap Dict{Symbol, String}
 #Map a high-level property to a setter function:
 typealias PropertyFunctionMap Dict{Symbol, Function}
 
+abstract PropType
+
+#Map a "PropType" property to a setter function:
+#(Does not need to be "set" using keyword arguments)
+#TODO: Find way to restrict Dict to DataTypes inherited from PropType?
+typealias PropTypeFunctionMap Dict{DataType, Function}
+
+#A constant litteral in grace...
+#-------------------------------------------------------------------------------
+type GraceConstLitteral
+	#Basically just a string, but will not be surrounded with quotes when sent...
+	s::String
+end
+
 #-------------------------------------------------------------------------------
 type Dataset
 	x::DataVec
@@ -51,31 +65,26 @@ type DatasetRef
 end
 
 #-------------------------------------------------------------------------------
-type TextProp
+type TextProp <: PropType
 	value::String
 	font
 	size
 	color
 end
-#Generate "text" constructor:
-eval(expr_propobjbuilder(:text, TextProp, reqfieldcnt=1))
+eval(expr_propobjbuilder(:text, TextProp, reqfieldcnt=1)) #"text" constructor
 
 #-------------------------------------------------------------------------------
-#	legendtext (associated with dataset)
-
-#-------------------------------------------------------------------------------
-type LineProp
+type LineProp <: PropType
 	_type
 	style
 	width
 	color
 	pattern
 end
-#trace?
-eval(expr_propobjbuilder(:line, LineProp, reqfieldcnt=0))
+eval(expr_propobjbuilder(:line, LineProp, reqfieldcnt=0)) #"line" constructor
 
 #-------------------------------------------------------------------------------
-type GlyphProp #Don't use name "Symbol" - used by Julia
+type GlyphProp <: PropType #Don't use "Symbol" - name used by Julia
 	_type
 	size
 	color
@@ -88,11 +97,10 @@ type GlyphProp #Don't use name "Symbol" - used by Julia
 	charfont
 	skipcount
 end
-#Generate "linestyle" constructor:
-eval(expr_propobjbuilder(:glyph, GlyphProp, reqfieldcnt=0))
+eval(expr_propobjbuilder(:glyph, GlyphProp, reqfieldcnt=0)) #"glyph" constructor
 
 #-------------------------------------------------------------------------------
-type FrameProp
+type FrameProp <: PropType
 	frametype
 	color
 	pattern
@@ -104,7 +112,7 @@ type FrameProp
 end
 
 #-------------------------------------------------------------------------------
-type LegendProp
+type LegendProp <: PropType
 	font
 	charsize
 	color
@@ -117,6 +125,31 @@ type LegendProp
 	boxfillpattern
 end
 
+#-------------------------------------------------------------------------------
+type AxesProp <: PropType
+	xmin; xmax; ymin; ymax
+	xscale; yscale #gconst[:lin/:log/:reciprocal]
+	invertx; inverty #gconst[:on/:off]
+end
+eval(expr_propobjbuilder(:axes, AxesProp, reqfieldcnt=0)) #"axes" constructor
+
+#-------------------------------------------------------------------------------
+type AxisTickProp <: PropType #???
+	majorspacing
+	minortickcount
+	placeatrounded
+#	autotickdivisions
+	direction #in/out/both
+end
+
+#Properties for Major/Minor ticks:???
+#-------------------------------------------------------------------------------
+type TickProp <: PropType
+	size
+	color
+	linewidth
+	linestyle
+end
 
 #==Other constructors/accessors
 ===============================================================================#
@@ -132,7 +165,7 @@ end
 Plot() = new() #Alias for code using type name for constructor.
 
 graphindex(g::GraphRef) = ((row,col)=g.coord; return g.plot.gdim[2]*row+col)
-graph(p::Plot, args...) = GraphRef(p, args...) #Link to exported function
+graph(p::Plot, args...) = GraphRef(p, args...) #Link constructor to exported function
 graphdata(g::GraphRef) = g.plot.graphs[graphindex(g)+1]
 
 #==Communication
@@ -140,7 +173,6 @@ graphdata(g::GraphRef) = g.plot.graphs[graphindex(g)+1]
 function sendcmd(p::Plot, cmd::String)
 	write(p.pipe, cmd)
 	write(p.pipe, "\n")
-
 	if p.log; info("$cmd\n"); end
 end
 
@@ -151,8 +183,80 @@ end
 Base.close(p::Plot) = sendcmd(p, "EXIT")
 #Base.close(p::Plot) = kill(p.process)
 
+
 #==Other helper functions
 ===============================================================================#
+
+#Escape all quotes from a string expression.
+#-------------------------------------------------------------------------------
 escapequotes(s::String) = replace(s, r"\"", "\\\"")
+
+#-------------------------------------------------------------------------------
+function sendpropchangecmd(p::Plot, cmd::String, value::Any) #Catchall
+	sendcmd(p, "$cmd $value")
+end
+function sendpropchangecmd(p::Plot, cmd::String, value::String)
+	sendcmd(p, "$cmd \"$value\"") #Add quotes around string
+end
+function sendpropchangecmd(p::Plot, cmd::String, value::GraceConstLitteral)
+	sendcmd(p, "$cmd $(value.s)") #Send associated string, unquoted
+end
+
+#Set graph properties for a given element:
+#-------------------------------------------------------------------------------
+function applypropchanges(g::GraphRef, fmap::PropertyCmdMap, prefix::String, data::Any)
+	setactive(g)
+
+	for prop in names(data)
+		v = eval(:($data.$prop))
+
+		if v != nothing
+			subcmd = get(fmap, prop, nothing)
+
+			if subcmd != nothing
+				sendpropchangecmd(g.plot, "$prefix$subcmd", v)
+			else
+				dtype = typeof(data)
+				warn("Property \"$prop\" of $dtype not currently supported.")
+			end
+		end
+	end
+end
+
+#Set dataset properties:
+#-------------------------------------------------------------------------------
+function applydatasetpropchanges(ds::DatasetRef, fmap::PropertyCmdMap, data::Any)
+	dsid = ds.id
+	applypropchanges(ds.graph, fmap::PropertyCmdMap, "S$dsid ", data::Any)
+end
+
+#Core algorithm for "set" interface:
+#-------------------------------------------------------------------------------
+function set(obj::Any, ptmap::PropTypeFunctionMap, fnmap::PropertyFunctionMap, args...; kwargs...)
+	for value in args
+		setfn = get(ptmap, typeof(value), nothing)
+
+		if setfn != nothing
+			setfn(obj, value)
+		else
+			argstr = string(typeof(value))
+			objtype = typeof(obj)
+			warn("Argument \"$argstr\" not recognized by \"set(::$objtype, ...)\"")
+		end
+	end
+
+	for (arg, value) in kwargs
+		setfn = get(fnmap, arg, nothing)
+
+		if setfn != nothing
+			setfn(obj, value)
+		else
+			argstr = string(arg)
+			objtype = typeof(obj)
+			warn("Argument \"$argstr\" not recognized by \"set(::$objtype, ...)\"")
+		end
+	end
+	return
+end
 
 #Last line
