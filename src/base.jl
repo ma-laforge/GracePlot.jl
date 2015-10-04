@@ -153,11 +153,14 @@ end
 
 #==Other constructors/accessors
 ===============================================================================#
-function new()
-	#switches:
+function new(; fixedcanvas::Bool=true, templatefile=nothing)
+	canvasarg = fixedcanvas? []: "-free"
+		#-free: Stretch canvas to client area
+	templatearg = templatefile!=nothing? ["-param" "$templatefile"]: []
+	#Other switches:
 	#   -dpipe 0: STDIN; -pipe switch seems broken
-	#   -free: Strech canvas to client area
-	(pipe, process) = open(`xmgrace -dpipe 0 -nosafe -noask`, "w")
+	cmd = `xmgrace -dpipe 0 -nosafe -noask $canvasarg $templatearg`
+	(pipe, process) = open(cmd, "w")
 	activegraph = -1 #None active @ start
 	return Plot(pipe, process, (0, 0), Graph[Graph()], activegraph, false)
 end

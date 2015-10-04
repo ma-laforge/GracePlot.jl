@@ -3,12 +3,12 @@
 
 using GracePlot
 
-
 #==Input data
 ===============================================================================#
 x=[-10:0.1:10]
 y2 = x.^2
 y3 = x.^3
+template = @filerelpath("sample_template.par")
 
 
 #=="Defaults"
@@ -18,16 +18,15 @@ defltframeline = line(width=2.5)
 axes_loglin = axes(xscale = gconst[:log], yscale = gconst[:lin])
 
 
-#==Plot 1: Basics
+#==Plot 1: Basics (use template to avoid specifying too many parameters)
 ===============================================================================#
-plt = GracePlot.new()
+plt = GracePlot.new(fixedcanvas=false, templatefile=template)
 g = graph(plt, 0)
 	set(g, title = "Parabolas", subtitle = "(\\f{Times-Italic}y=+/- x\\f{}\\S2\\N)")
 	set(g, xlabel = text("Time (s)", color=2), ylabel = "Normalized height")
-	set(g, frameline = defltframeline)
 	set(g, unsupported = "no dice")
 	ds = add(g, x, y2) #Use only Grace default line settings
-	ds = add(g, x, -y2, defltline)
+	ds = add(g, x, -y2)
 	autofit(g)
 
 #Finalize:
