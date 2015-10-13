@@ -2,6 +2,12 @@
 
 #==Type definitions
 ===============================================================================#
+abstract DataFormat
+
+type EPS <: DataFormat; end
+type SVG <: DataFormat; end
+type PNG <: DataFormat; end
+
 #Data vector type (don't support complex numbers):
 typealias DataVec{T<:Real} Vector{T}
 

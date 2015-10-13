@@ -8,5 +8,6 @@ end
 
 #No real test code yet... just run demos:
 include("demo1.jl")
+include("demo2.jl")
 
 :Test_Complete

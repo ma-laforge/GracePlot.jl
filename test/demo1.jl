@@ -64,7 +64,6 @@ redraw(plt)
 
 
 #Other possible operations... but don't test here:
-#save(plt, "sampleoutput.agr")
 #sleep(1); close(plt)
 
 #Last line

@@ -34,6 +34,7 @@ export glyph #Creates a GlyphProp object to modify glyph properties
 export save
 export redraw #Whole plot
 export gconst #Dict proivding constant litterals to the user
+export SVG, PNG, EPS #Output data formats
 
 #==
 Other interface tools (symbols not exported to avoid collisions):
