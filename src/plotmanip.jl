@@ -34,10 +34,10 @@ function exportplot(p::Plot, filefmt::String, filepath::String)
 end
 
 #Save to PNG (avoid use of "export" keyword):
-save(::Type{PNG}, p::Plot, filepath::String) = exportplot(p, "PNG", filepath)
+save(::Type{File{PNGFmt}}, p::Plot, filepath::String) = exportplot(p, "PNG", filepath)
 
 #Save to EPS (avoid use of "export" keyword):
-function save(::Type{EPS}, p::Plot, filepath::String) 
+function save(::Type{File{EPSFmt}}, p::Plot, filepath::String) 
 	sendcmd(p, "DEVICE \"EPS\" OP \"bbox:page\"")
 	exportplot(p, "EPS", filepath)
 end
@@ -45,7 +45,7 @@ end
 #Export to svg.  (Fix Grace output according W3C 1999 format):
 #TODO: Make more robust... use more try/catch.
 #NOTE: Replace xml (svg) statements using Julia v3 compatibility.
-function save(::Type{SVG}, p::Plot, filepath::String)
+function save(::Type{File{SVGFmt}}, p::Plot, filepath::String)
 	tmpfilepath = "./.tempgraceplotexport.svg"
 	#Export to svg, using the native Grace format:
 	exportplot(p, "SVG", tmpfilepath)

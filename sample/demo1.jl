@@ -8,8 +8,9 @@ using GracePlot
 x=[-10:0.1:10]
 y2 = x.^2
 y3 = x.^3
-template = @filerelpath("sample_template.par")
 
+#Use sample template: Monochrome engineering paper (no title; expect caption)
+engpaper = GracePlot.template("engpaper_mono")
 
 #=="Defaults"
 ===============================================================================#
@@ -20,7 +21,7 @@ axes_loglin = axes(xscale = gconst[:log], yscale = gconst[:lin])
 
 #==Plot 1: Basics (use template to avoid specifying too many parameters)
 ===============================================================================#
-plt = GracePlot.new(fixedcanvas=false, templatefile=template)
+plt = GracePlot.new(fixedcanvas=false, template=engpaper)
 g = graph(plt, 0)
 	set(g, title = "Parabolas", subtitle = "(\\f{Times-Italic}y=+/- x\\f{}\\S2\\N)")
 	set(g, xlabel = text("Time (s)", color=2), ylabel = "Normalized height")

@@ -2,11 +2,6 @@
 
 #==Type definitions
 ===============================================================================#
-abstract DataFormat
-
-type EPS <: DataFormat; end
-type SVG <: DataFormat; end
-type PNG <: DataFormat; end
 
 #Data vector type (don't support complex numbers):
 typealias DataVec{T<:Real} Vector{T}
@@ -159,10 +154,10 @@ end
 
 #==Other constructors/accessors
 ===============================================================================#
-function new(; fixedcanvas::Bool=true, templatefile=nothing)
+function new(; fixedcanvas::Bool=true, template=nothing)
 	canvasarg = fixedcanvas? []: "-free"
 		#-free: Stretch canvas to client area
-	templatearg = templatefile!=nothing? ["-param" "$templatefile"]: []
+	templatearg = template!=nothing? ["-param" "$template"]: []
 	#Other switches:
 	#   -dpipe 0: STDIN; -pipe switch seems broken
 	cmd = `xmgrace -dpipe 0 -nosafe -noask $canvasarg $templatearg`

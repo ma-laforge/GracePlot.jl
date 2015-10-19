@@ -2,6 +2,7 @@
 #-------------------------------------------------------------------------------
 
 using GracePlot
+using FileIO2
 
 #==Input data
 ===============================================================================#
@@ -9,8 +10,7 @@ using GracePlot
 x=[-1:0.02:1].*pi
 y1 = sin(x)
 y2 = cos(x)
-template = @filerelpath("sample_template.par")
-
+engpaper = GracePlot.template("engpaper_mono")
 
 #=="Defaults"
 ===============================================================================#
@@ -18,7 +18,7 @@ template = @filerelpath("sample_template.par")
 
 #==Plot 1: Basics (use template to avoid specifying too many parameters)
 ===============================================================================#
-plt = GracePlot.new(fixedcanvas=true, templatefile=template)
+plt = GracePlot.new(fixedcanvas=true, template=engpaper)
 g = graph(plt, 0)
 	#No point in having a title with this particular template:
 #	set(g, title = "Grace SVG Plot", subtitle = "(\\f{Times-Italic}y\\s1\\N=sin(x), y\\s2\\N=cos(x)\\f{})")
@@ -32,8 +32,7 @@ redraw(plt)
 
 #Save plot in multiple formats:
 save(plt, "sinewaveplot.agr")
-save(EPS, plt, "sinewaveplot.eps")
-save(SVG, plt, "sinewaveplot.svg")
-save(PNG, plt, "sinewaveplot.png")
-
+save(File{EPSFmt}, plt, "sinewaveplot.eps")
+save(File{SVGFmt}, plt, "sinewaveplot.svg")
+save(File{PNGFmt}, plt, "sinewaveplot.png")
 #Last line
