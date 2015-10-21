@@ -32,7 +32,7 @@ GracePlot.jl currently provides a relatively "bare-bones" interface (despite off
 
 Extensive compatibility testing of GracePlot.jl has not been performed.  The module has been tested using the following environment(s):
 
- - Linux / Julia-0.3.6 / Grace-5.1.23.
+ - Linux / Julia-0.4.0 / Grace-5.1.23.
 
 ## Disclaimer
 

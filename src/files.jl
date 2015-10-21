@@ -8,7 +8,7 @@
 abstract ParamFmt <: FileIO2.DataFormat
 
 #Return a param
-template(name::String) =
+template(name::AbstractString) =
 	File{ParamFmt}(joinpath(GracePlot.rootpath, "sample/template/$name.par"))
 
 #Last line

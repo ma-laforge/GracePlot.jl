@@ -6,8 +6,8 @@ using FileIO2
 
 #==Input data
 ===============================================================================#
-#x=[-1:0.1:1].*pi
-x=[-1:0.02:1].*pi
+#x=collect(-1:0.1:1).*pi
+x=collect(-1:0.02:1).*pi
 y1 = sin(x)
 y2 = cos(x)
 engpaper = GracePlot.template("engpaper_mono")

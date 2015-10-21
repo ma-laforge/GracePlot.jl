@@ -8,7 +8,7 @@
 redraw(p::Plot) = sendcmd(p, "REDRAW")
 
 #-------------------------------------------------------------------------------
-function save(p::Plot, path::String)
+function save(p::Plot, path::AbstractString)
 	@assert !contains(path, "\"") "File path contains '\"'."
 	sendcmd(p, "SAVEALL \"$path\"")
 end
@@ -26,7 +26,7 @@ function arrange(p::Plot, gdim::GraphCoord; offset=0.08, hgap=0.15, vgap=0.2)
 	end
 end
 
-function exportplot(p::Plot, filefmt::String, filepath::String)
+function exportplot(p::Plot, filefmt::AbstractString, filepath::AbstractString)
 	sendcmd(p, "HARDCOPY DEVICE \"$filefmt\"")
 	sendcmd(p, "PRINT TO \"$filepath\"")
 	sendcmd(p, "PRINT")
@@ -34,10 +34,10 @@ function exportplot(p::Plot, filefmt::String, filepath::String)
 end
 
 #Save to PNG (avoid use of "export" keyword):
-save(::Type{File{PNGFmt}}, p::Plot, filepath::String) = exportplot(p, "PNG", filepath)
+save(::Type{File{PNGFmt}}, p::Plot, filepath::AbstractString) = exportplot(p, "PNG", filepath)
 
 #Save to EPS (avoid use of "export" keyword):
-function save(::Type{File{EPSFmt}}, p::Plot, filepath::String) 
+function save(::Type{File{EPSFmt}}, p::Plot, filepath::AbstractString) 
 	sendcmd(p, "DEVICE \"EPS\" OP \"bbox:page\"")
 	exportplot(p, "EPS", filepath)
 end
@@ -45,7 +45,7 @@ end
 #Export to svg.  (Fix Grace output according W3C 1999 format):
 #TODO: Make more robust... use more try/catch.
 #NOTE: Replace xml (svg) statements using Julia v3 compatibility.
-function save(::Type{File{SVGFmt}}, p::Plot, filepath::String)
+function save(::Type{File{SVGFmt}}, p::Plot, filepath::AbstractString)
 	tmpfilepath = "./.tempgraceplotexport.svg"
 	#Export to svg, using the native Grace format:
 	exportplot(p, "SVG", tmpfilepath)
@@ -163,8 +163,8 @@ const title_propertycmdmap = PropertyCmdMap([
 
 settitle(g::GraphRef, p::TextProp) = applypropchanges(g, title_propertycmdmap, "TITLE ", p)
 setsubtitle(g::GraphRef, p::TextProp) = applypropchanges(g, title_propertycmdmap, "SUBTITLE ", p)
-settitle(g::GraphRef, title::String) = settitle(g, text(title))
-setsubtitle(g::GraphRef, title::String) = setsubtitle(g, text(title))
+settitle(g::GraphRef, title::AbstractString) = settitle(g, text(title))
+setsubtitle(g::GraphRef, title::AbstractString) = setsubtitle(g, text(title))
 
 #-------------------------------------------------------------------------------
 const label_propertycmdmap = PropertyCmdMap([
@@ -176,8 +176,8 @@ const label_propertycmdmap = PropertyCmdMap([
 
 setxlabel(g::GraphRef, p::TextProp) = applypropchanges(g, title_propertycmdmap, "XAXIS LABEL ", p)
 setylabel(g::GraphRef, p::TextProp) = applypropchanges(g, title_propertycmdmap, "YAXIS LABEL ", p)
-setxlabel(g::GraphRef, label::String) = setxlabel(g, text(label))
-setylabel(g::GraphRef, label::String) = setylabel(g, text(label))
+setxlabel(g::GraphRef, label::AbstractString) = setxlabel(g, text(label))
+setylabel(g::GraphRef, label::AbstractString) = setylabel(g, text(label))
 
 #-------------------------------------------------------------------------------
 const frameline_propertycmdmap = PropertyCmdMap([

@@ -7,10 +7,10 @@
 typealias DataVec{T<:Real} Vector{T}
 
 #Graph coordinate (zero-based):
-typealias GraphCoord NTuple{Int, Int}
+typealias GraphCoord Tuple{Int, Int}
 
 #Map property fields to grace commands:
-typealias PropertyCmdMap Dict{Symbol, String}
+typealias PropertyCmdMap Dict{Symbol, AbstractString}
 
 #Map a high-level property to a setter function:
 typealias PropertyFunctionMap Dict{Symbol, Function}
@@ -26,7 +26,7 @@ typealias PropTypeFunctionMap Dict{DataType, Function}
 #-------------------------------------------------------------------------------
 type GraceConstLitteral
 	#Basically just a string, but will not be surrounded with quotes when sent...
-	s::String
+	s::AbstractString
 end
 
 #-------------------------------------------------------------------------------
@@ -67,7 +67,7 @@ end
 
 #-------------------------------------------------------------------------------
 type TextProp <: PropType
-	value::String
+	value::AbstractString
 	font
 	size
 	color
@@ -174,7 +174,7 @@ graphdata(g::GraphRef) = g.plot.graphs[graphindex(g)+1]
 
 #==Communication
 ===============================================================================#
-function sendcmd(p::Plot, cmd::String)
+function sendcmd(p::Plot, cmd::AbstractString)
 	write(p.pipe, cmd)
 	write(p.pipe, "\n")
 	if p.log; info("$cmd\n"); end
@@ -193,25 +193,25 @@ Base.close(p::Plot) = sendcmd(p, "EXIT")
 
 #Escape all quotes from a string expression.
 #-------------------------------------------------------------------------------
-escapequotes(s::String) = replace(s, r"\"", "\\\"")
+escapequotes(s::AbstractString) = replace(s, r"\"", "\\\"")
 
 #-------------------------------------------------------------------------------
-function sendpropchangecmd(p::Plot, cmd::String, value::Any) #Catchall
+function sendpropchangecmd(p::Plot, cmd::AbstractString, value::Any) #Catchall
 	sendcmd(p, "$cmd $value")
 end
-function sendpropchangecmd(p::Plot, cmd::String, value::String)
+function sendpropchangecmd(p::Plot, cmd::AbstractString, value::AbstractString)
 	sendcmd(p, "$cmd \"$value\"") #Add quotes around string
 end
-function sendpropchangecmd(p::Plot, cmd::String, value::GraceConstLitteral)
+function sendpropchangecmd(p::Plot, cmd::AbstractString, value::GraceConstLitteral)
 	sendcmd(p, "$cmd $(value.s)") #Send associated string, unquoted
 end
 
 #Set graph properties for a given element:
 #-------------------------------------------------------------------------------
-function applypropchanges(g::GraphRef, fmap::PropertyCmdMap, prefix::String, data::Any)
+function applypropchanges(g::GraphRef, fmap::PropertyCmdMap, prefix::AbstractString, data::Any)
 	setactive(g)
 
-	for prop in names(data)
+	for prop in fieldnames(data)
 		v = eval(:($data.$prop))
 
 		if v != nothing

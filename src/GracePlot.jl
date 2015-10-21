@@ -12,7 +12,7 @@ include("files.jl")
 
 #Provide some constant litterals for the user.
 #(Use dict to avoid polluting namespace too much)
-const gconst = Dict{Symbol, GraceConstLitteral} ([
+const gconst = Dict{Symbol, GraceConstLitteral}([
 	(:lin, GraceConstLitteral("NORMAL")),
 	(:log, GraceConstLitteral("LOGARITHMIC")),
 	(:reciprocal, GraceConstLitteral("RECIPROCAL")),
