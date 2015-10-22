@@ -1,17 +1,98 @@
 #GracePlot functions to control Grace/xmgrace
 #-------------------------------------------------------------------------------
 
+#==Type definitions
+===============================================================================#
+
+#Map an individual attribute to a setter function:
+typealias AttributeFunctionMap Dict{Symbol, Function}
+
+#Map an "AttributeList" element to a setter function:
+#NOTE: Unlike individual attributes, typed obects do not need to be "set"
+#      using keyword arguments
+#TODO: Find way to restrict Dict to DataTypes inherited from AttributeList
+typealias AttributeListFunctionMap Dict{DataType, Function}
+
+#Map attribute fields to grace commands:
+typealias AttributeCmdMap Dict{Symbol, AbstractString}
+
+
+#==Helper functions
+===============================================================================#
+
+function setattrib(p::Plot, cmd::AbstractString, value::Any) #Catchall
+	sendcmd(p, "$cmd $value")
+end
+function setattrib(p::Plot, cmd::AbstractString, value::AbstractString)
+	sendcmd(p, "$cmd \"$value\"") #Add quotes around string
+end
+function setattrib(p::Plot, cmd::AbstractString, value::GraceConstLitteral)
+	sendcmd(p, "$cmd $(value.s)") #Send associated string, unquoted
+end
+
+#Set graph attributes for a given element:
+#-------------------------------------------------------------------------------
+function setattrib(g::GraphRef, fmap::AttributeCmdMap, prefix::AbstractString, data::Any)
+	setactive(g)
+
+	for attrib in fieldnames(data)
+		v = eval(:($data.$attrib))
+
+		if v != nothing
+			subcmd = get(fmap, attrib, nothing)
+
+			if subcmd != nothing
+				setattrib(g.plot, "$prefix$subcmd", v)
+			else
+				dtype = typeof(data)
+				warn("Attribute \"$attrib\" of $dtype not currently supported.")
+			end
+		end
+	end
+end
+
+#Set dataset attribute:
+#-------------------------------------------------------------------------------
+function setattrib(ds::DatasetRef, fmap::AttributeCmdMap, data::Any)
+	dsid = ds.id
+	setattrib(ds.graph, fmap::AttributeCmdMap, "S$dsid ", data::Any)
+end
+
+#Core algorithm for "set" interface:
+#-------------------------------------------------------------------------------
+function set(obj::Any, listfnmap::AttributeListFunctionMap, fnmap::AttributeFunctionMap, args...; kwargs...)
+	for value in args
+		setfn = get(listfnmap, typeof(value), nothing)
+
+		if setfn != nothing
+			setfn(obj, value)
+		else
+			argstr = string(typeof(value))
+			objtype = typeof(obj)
+			warn("Argument \"$argstr\" not recognized by \"set(::$objtype, ...)\"")
+		end
+	end
+
+	for (arg, value) in kwargs
+		setfn = get(fnmap, arg, nothing)
+
+		if setfn != nothing
+			setfn(obj, value)
+		else
+			argstr = string(arg)
+			objtype = typeof(obj)
+			warn("Argument \"$argstr\" not recognized by \"set(::$objtype, ...)\"")
+		end
+	end
+	return
+end
+
+
 #==Plot-level functionality
 ===============================================================================#
 
 #-------------------------------------------------------------------------------
 redraw(p::Plot) = sendcmd(p, "REDRAW")
-
-#-------------------------------------------------------------------------------
-function FileIO2.save(p::Plot, path::AbstractString)
-	@assert !contains(path, "\"") "File path contains '\"'."
-	sendcmd(p, "SAVEALL \"$path\"")
-end
 
 #-------------------------------------------------------------------------------
 function arrange(p::Plot, gdim::GraphCoord; offset=0.08, hgap=0.15, vgap=0.2)
@@ -24,74 +105,6 @@ function arrange(p::Plot, gdim::GraphCoord; offset=0.08, hgap=0.15, vgap=0.2)
 	for i in 1:delta
 		push!(p.graphs, Graph())
 	end
-end
-
-function exportplot(p::Plot, filefmt::AbstractString, filepath::AbstractString)
-	sendcmd(p, "HARDCOPY DEVICE \"$filefmt\"")
-	sendcmd(p, "PRINT TO \"$filepath\"")
-	sendcmd(p, "PRINT")
-	#Sadly, Grace does not wait unil file is saved to return from "PRINT"
-end
-
-#Save to PNG (avoid use of "export" keyword):
-FileIO2.save(::Type{File{PNGFmt}}, p::Plot, filepath::AbstractString) = exportplot(p, "PNG", filepath)
-
-#Save to EPS (avoid use of "export" keyword):
-function FileIO2.save(::Type{File{EPSFmt}}, p::Plot, filepath::AbstractString) 
-	sendcmd(p, "DEVICE \"EPS\" OP \"bbox:page\"")
-	exportplot(p, "EPS", filepath)
-end
-
-#Export to svg.  (Fix Grace output according W3C 1999 format):
-#TODO: Make more robust... use more try/catch.
-#NOTE: Replace xml (svg) statements using Julia v3 compatibility.
-function FileIO2.save(::Type{File{SVGFmt}}, p::Plot, filepath::AbstractString)
-	tmpfilepath = "./.tempgraceplotexport.svg"
-	#Export to svg, using the native Grace format:
-	exportplot(p, "SVG", tmpfilepath)
-	#NOTE: Is this the 2001 format?  Most programs do not appear to read it.
-
-	local src
-	retries = 3
-	twait = 1 #sec
-	wait_expfact = 2#Exponential factor to increase wait time
-	success = false
-
-
-	while !success
-		try
-#			tmpfilepath = "nope"
-			src = open(tmpfilepath, "r")
-			success = true
-		catch e
-			retries -= 1
-			sleep(twait)
-#			@show twait
-			twait *= wait_expfact
-			if retries < 0
-				rethrow(e)
-			end
-		end
-	end
-	
-	filedat = readall(src)
-	close(src)
-
-	#Remove <!DOCTYPE svg ...> statement:
-	pat = r"^[ \t]*<!DOCTYPE svG.*$"mi
-	filedat = replace(filedat, pat, "")
-
-	#Modify <svg ...> statement:
-	pat = r"(^[ \t]*<svg) xml:space=\"preserve\" (.*$)"mi
-	captures = match(pat, filedat).captures
-	cap1 = captures[1]; cap2 = captures[2]
-	filedat = replace(filedat, pat, "$cap1 xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" $cap2")
-
-	dest = open(filepath, "w")
-	write(dest, filedat)
-	close(dest)
-
-	rm(tmpfilepath)
 end
 
  
@@ -154,39 +167,39 @@ end
 autofit(g::GraphRef) = autofit(g, x=true, y=true)
 
 #-------------------------------------------------------------------------------
-const title_propertycmdmap = PropertyCmdMap([
+const title_attribcmdmap = AttributeCmdMap([
 	(:value, "")
 	(:font, "FONT")
 	(:size, "SIZE")
 	(:color, "COLOR")
 ])
 
-settitle(g::GraphRef, p::TextProp) = applypropchanges(g, title_propertycmdmap, "TITLE ", p)
-setsubtitle(g::GraphRef, p::TextProp) = applypropchanges(g, title_propertycmdmap, "SUBTITLE ", p)
+settitle(g::GraphRef, a::TextAttributes) = setattrib(g, title_attribcmdmap, "TITLE ", a)
+setsubtitle(g::GraphRef, a::TextAttributes) = setattrib(g, title_attribcmdmap, "SUBTITLE ", a)
 settitle(g::GraphRef, title::AbstractString) = settitle(g, text(title))
 setsubtitle(g::GraphRef, title::AbstractString) = setsubtitle(g, text(title))
 
 #-------------------------------------------------------------------------------
-const label_propertycmdmap = PropertyCmdMap([
+const label_attribcmdmap = AttributeCmdMap([
 	(:value, "")
 	(:font, "FONT")
 	(:size, "CHAR SIZE")
 	(:color, "COLOR")
 ])
 
-setxlabel(g::GraphRef, p::TextProp) = applypropchanges(g, title_propertycmdmap, "XAXIS LABEL ", p)
-setylabel(g::GraphRef, p::TextProp) = applypropchanges(g, title_propertycmdmap, "YAXIS LABEL ", p)
+setxlabel(g::GraphRef, a::TextAttributes) = setattrib(g, title_attribcmdmap, "XAXIS LABEL ", a)
+setylabel(g::GraphRef, a::TextAttributes) = setattrib(g, title_attribcmdmap, "YAXIS LABEL ", a)
 setxlabel(g::GraphRef, label::AbstractString) = setxlabel(g, text(label))
 setylabel(g::GraphRef, label::AbstractString) = setylabel(g, text(label))
 
 #-------------------------------------------------------------------------------
-const frameline_propertycmdmap = PropertyCmdMap([
+const frameline_attribcmdmap = AttributeCmdMap([
 	(:style, "LINESTYLE")
 	(:width, "LINEWIDTH")
 ])
-setframeline(g::GraphRef, p::LineProp) = applypropchanges(g, frameline_propertycmdmap, "FRAME ", p)
+setframeline(g::GraphRef, a::LineAttributes) = setattrib(g, frameline_attribcmdmap, "FRAME ", a)
 
-const axes_propertycmdmap = PropertyCmdMap([
+const axes_attribcmdmap = AttributeCmdMap([
 	(:xmin, "WORLD XMIN"), (:xmax, "WORLD XMAX"),
 	(:ymin, "WORLD YMIN"), (:ymax, "WORLD YMAX"),
 	(:xscale, "XAXES SCALE"),
@@ -194,7 +207,7 @@ const axes_propertycmdmap = PropertyCmdMap([
 	(:invertx, "XAXES INVERT"),
 	(:inverty, "YAXES INVERT"),
 ])
-setaxes(g::GraphRef, p::AxesProp) = applypropchanges(g, axes_propertycmdmap, "", p)
+setaxes(g::GraphRef, a::AxesAttributes) = setattrib(g, axes_attribcmdmap, "", a)
 
 
 #==Dataset-level functionality
@@ -221,56 +234,56 @@ function add(g::GraphRef, x::DataVec, y::DataVec, args...; kwargs...)
 end
 
 #-------------------------------------------------------------------------------
-const dsline_propertycmdmap = PropertyCmdMap([
+const dsline_attribcmdmap = AttributeCmdMap([
 	(:_type, "LINE TYPE")
 	(:style, "LINE LINESTYLE")
 	(:width, "LINE LINEWIDTH")
 	(:color, "LINE COLOR")
 ])
-setline(ds::DatasetRef, p::LineProp) = applydatasetpropchanges(ds, dsline_propertycmdmap, p)
+setline(ds::DatasetRef, a::LineAttributes) = setattrib(ds, dsline_attribcmdmap, a)
 
 #-------------------------------------------------------------------------------
-const glyph_propertycmdmap = PropertyCmdMap([
+const glyph_attribcmdmap = AttributeCmdMap([
 	(:_type, "SYMBOL")
 	(:size, "SYMBOL SIZE")
 	(:color, "SYMBOL COLOR")
 	(:skipcount, "SYMBOL SKIP")
 ])
-setglyph(ds::DatasetRef, p::GlyphProp) = applydatasetpropchanges(ds, glyph_propertycmdmap, p)
+setglyph(ds::DatasetRef, a::GlyphAttributes) = setattrib(ds, glyph_attribcmdmap, a)
 
 
 #==Define cleaner "set" interface (minimize # of "export"-ed functions)
 ===============================================================================#
 
 #-------------------------------------------------------------------------------
-const empty_ptmap = PropTypeFunctionMap()
-const empty_fnmap = PropertyFunctionMap()
+const empty_listfnmap = AttributeListFunctionMap()
+const empty_fnmap = AttributeFunctionMap()
 
 #-------------------------------------------------------------------------------
-const setplot_fnmap = PropertyFunctionMap([
+const setplot_fnmap = AttributeFunctionMap([
 	(:active, setactive)
 	(:focus, setfocus)
 ])
-set(g::Plot, args...; kwargs...) = set(g, empty_ptmap, setplot_fnmap, args...; kwargs...)
+set(g::Plot, args...; kwargs...) = set(g, empty_listfnmap, setplot_fnmap, args...; kwargs...)
 
 #-------------------------------------------------------------------------------
-const setgraph_ptmap = PropTypeFunctionMap([
-	(AxesProp, setaxes)
+const setgraph_listfnmap = AttributeListFunctionMap([
+	(AxesAttributes, setaxes)
 ])
-const setgraph_fnmap = PropertyFunctionMap([
+const setgraph_fnmap = AttributeFunctionMap([
 	(:title, settitle)
 	(:subtitle, setsubtitle)
 	(:xlabel, setxlabel)
 	(:ylabel, setylabel)
 	(:frameline, setframeline)
 ])
-set(g::GraphRef, args...; kwargs...) = set(g, setgraph_ptmap, setgraph_fnmap, args...; kwargs...)
+set(g::GraphRef, args...; kwargs...) = set(g, setgraph_listfnmap, setgraph_fnmap, args...; kwargs...)
 
 #-------------------------------------------------------------------------------
-const setline_ptmap = PropTypeFunctionMap([
-	(LineProp, setline)
-	(GlyphProp, setglyph)
+const setline_listfnmap = AttributeListFunctionMap([
+	(LineAttributes, setline)
+	(GlyphAttributes, setglyph)
 ])
-set(g::DatasetRef, args...; kwargs...) = set(g, setline_ptmap, empty_fnmap, args...; kwargs...)
+set(g::DatasetRef, args...; kwargs...) = set(g, setline_listfnmap, empty_fnmap, args...; kwargs...)
 
 #Last line

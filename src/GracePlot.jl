@@ -32,10 +32,10 @@ export set #Set Plot/Graph properties
 #      kwargs: title, subtitle, xlabel, ylabel, frameline
 #   set(::DatasetRef, arg1, arg2, ..., kwarg1=v1, kwarg2=v1, ...)
 #      args: line(), glyph()
-export text #Creates a TextProp object to set titles, etc
-export axes #Creates a AxesProp object to modify axis properties
-export line #Creates a LineProp object to modify line properties
-export glyph #Creates a GlyphProp object to modify glyph properties
+export text #Creates TextAttributes to set titles, etc
+export axes #Creates AxesAttributes to modify axis
+export line #Creates LineAttributes to modify line
+export glyph #Creates GlyphAttributes to modify glyph
 export redraw #Whole plot
 export gconst #Dict proivding constant litterals to the user
 
