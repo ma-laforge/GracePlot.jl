@@ -8,7 +8,7 @@
 redraw(p::Plot) = sendcmd(p, "REDRAW")
 
 #-------------------------------------------------------------------------------
-function save(p::Plot, path::AbstractString)
+function FileIO2.save(p::Plot, path::AbstractString)
 	@assert !contains(path, "\"") "File path contains '\"'."
 	sendcmd(p, "SAVEALL \"$path\"")
 end
@@ -34,10 +34,10 @@ function exportplot(p::Plot, filefmt::AbstractString, filepath::AbstractString)
 end
 
 #Save to PNG (avoid use of "export" keyword):
-save(::Type{File{PNGFmt}}, p::Plot, filepath::AbstractString) = exportplot(p, "PNG", filepath)
+FileIO2.save(::Type{File{PNGFmt}}, p::Plot, filepath::AbstractString) = exportplot(p, "PNG", filepath)
 
 #Save to EPS (avoid use of "export" keyword):
-function save(::Type{File{EPSFmt}}, p::Plot, filepath::AbstractString) 
+function FileIO2.save(::Type{File{EPSFmt}}, p::Plot, filepath::AbstractString) 
 	sendcmd(p, "DEVICE \"EPS\" OP \"bbox:page\"")
 	exportplot(p, "EPS", filepath)
 end
@@ -45,7 +45,7 @@ end
 #Export to svg.  (Fix Grace output according W3C 1999 format):
 #TODO: Make more robust... use more try/catch.
 #NOTE: Replace xml (svg) statements using Julia v3 compatibility.
-function save(::Type{File{SVGFmt}}, p::Plot, filepath::AbstractString)
+function FileIO2.save(::Type{File{SVGFmt}}, p::Plot, filepath::AbstractString)
 	tmpfilepath = "./.tempgraceplotexport.svg"
 	#Export to svg, using the native Grace format:
 	exportplot(p, "SVG", tmpfilepath)
