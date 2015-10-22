@@ -1,0 +1,57 @@
+#GracePlot: Lightweight units
+#-------------------------------------------------------------------------------
+
+#==TODO:
+use proper units/quantity module, as described in:
+https://github.com/ma-laforge/testcases/blob/master/units_test/units_test.jl
+==#
+
+
+#==Constants
+===============================================================================#
+const INCH_IN_METERS = .0254
+const INCH_IN_POINTS = 72
+
+
+#==Type definitions
+===============================================================================#
+
+abstract AbstractQuantity
+val(x::AbstractQuantity) = x.v
+
+abstract AbstractLength <: AbstractQuantity
+
+#Typographic (DTP) "point":
+immutable TPoint <: AbstractLength
+	v::Number
+end
+
+immutable Inch <: AbstractLength
+	v::Number
+end
+
+immutable Meter <: AbstractLength
+	v::Number
+end
+
+
+#==Conversion functions:
+===============================================================================#
+Base.convert(::Type{Inch}, x::Meter) = Inch(val(x)*(1/INCH_IN_METERS))
+Base.convert(::Type{Inch}, x::TPoint) = Inch(val(x)*(1/INCH_IN_POINTS))
+Base.convert(::Type{Meter}, x::Inch) = Meter(val(x)*INCH_IN_METERS)
+Base.convert(::Type{TPoint}, x::Inch) = TPoint(val(x)*INCH_IN_POINTS)
+
+#Indirect conversions:
+Base.convert(::Type{Meter}, x::TPoint) = convert(Meter, convert(Inch, x))
+Base.convert(::Type{TPoint}, x::Meter) = convert(TPoint, convert(Inch, x))
+
+TPoint(x::TPoint) = x
+Meter(x::Meter) = x
+Inch(x::Inch) = x
+TPoint(x) = convert(TPoint, x)
+Meter(x) = convert(Meter, x)
+Inch(x) = convert(Inch, x)
+
+
+#end

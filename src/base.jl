@@ -31,9 +31,33 @@ type Graph
 end
 
 #-------------------------------------------------------------------------------
+type PageSizeAttributes <: AttributeList
+	width::AbstractLength
+	height::AbstractLength
+end
+pagesize(width::AbstractLength, height::AbstractLength) = PageSizeAttributes(width, height)
+
+#-------------------------------------------------------------------------------
+type LayoutAttributes <: AttributeList
+	rows
+	cols
+	offset
+	hgap
+	vgap
+end
+eval(genexpr_attriblistbuilder(:layout, LayoutAttributes)) #"layout" constructor
+
+#-------------------------------------------------------------------------------
 type Plot
 	pipe::Base.Pipe
 	process::Base.Process
+
+	#Width/height stored so user knows what it is
+	#>>Smallest of height/width is considered unity by Grace<<
+	page::PageSizeAttributes
+	#Layout also stored, because all attributes are manipulated with single command:
+	layout::LayoutAttributes
+
 	gdim::GraphCoord
 	graphs::Vector{Graph}
 	activegraph::Int
@@ -140,9 +164,11 @@ type TickAttributes <: AttributeList
 	linestyle
 end
 
+
 #==Other constructors/accessors
 ===============================================================================#
 function new(; fixedcanvas::Bool=true, template=nothing)
+	const defaultcanvasratio = 1.6 #Roughly golden ratio
 	canvasarg = fixedcanvas? []: "-free"
 		#-free: Stretch canvas to client area
 	templatearg = template!=nothing? ["-param" "$template"]: []
@@ -151,7 +177,26 @@ function new(; fixedcanvas::Bool=true, template=nothing)
 	cmd = `xmgrace -dpipe 0 -nosafe -noask $canvasarg $templatearg`
 	(pipe, process) = open(cmd, "w")
 	activegraph = -1 #None active @ start
-	return Plot(pipe, process, (0, 0), Graph[Graph()], activegraph, false)
+
+	#Default width/height (16cm x 10cm - roughly golden ratio):
+	const c = 0.01 #centi
+	h = 20c; w = h*defaultcanvasratio
+	sz = pagesize(Meter(w), Meter(h))
+	lyt = layout(rows=1, cols=1, offset=0.15, hgap=0.15, vgap=0.15)
+
+	plot = Plot(pipe, process, sz, lyt, (0, 0),
+		Graph[Graph()], activegraph, false
+	)
+	#At this point, sz & lyt are still basically meaningless...
+
+	#Only set plot page size/layout (send to xmgrace) if not reading template...
+	#(Template might already have a page size set)
+	#...So when templates are used, the value of plot.page/layout is meaningless...
+	if nothing == template
+		set(plot, sz, lyt)
+	end
+
+	return plot
 end
 
 Plot() = new() #Alias for code using type name for constructor.

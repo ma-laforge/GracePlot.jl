@@ -20,6 +20,17 @@ typealias AttributeCmdMap Dict{Symbol, AbstractString}
 #==Helper functions
 ===============================================================================#
 
+#Copy in only attributes that are not "nothing" (thus "new"):
+function copynew!{T<:AttributeList}(dest::T, newlist::T)
+	for attrib in fieldnames(newlist)
+		v = eval(:($newlist.$attrib))
+
+		if v != nothing
+			eval(:($dest.$attrib=$newlist.$attrib))
+		end
+	end
+end
+
 function setattrib(p::Plot, cmd::AbstractString, value::Any) #Catchall
 	sendcmd(p, "$cmd $value")
 end
@@ -95,10 +106,22 @@ end
 redraw(p::Plot) = sendcmd(p, "REDRAW")
 
 #-------------------------------------------------------------------------------
-function arrange(p::Plot, gdim::GraphCoord; offset=0.08, hgap=0.15, vgap=0.2)
-	(rows, cols) = gdim
+function setpagesize(p::Plot, a::PageSizeAttributes)
+	p.page = a
+	width = round(Int, val(TPoint(a.width)))
+	height = round(Int, val(TPoint(a.height)))
+	sendcmd(p, "PAGE SIZE $width, $height")
+	#Will also stretch entire plot if RESIZE is used instead:
+	#sendcmd(p, "PAGE RESIZE $width, $height")
+	return a
+end
+
+#-------------------------------------------------------------------------------
+function setlayout(p::Plot, a::LayoutAttributes)
+	copynew!(p.layout, a)
+	rows = p.layout.rows; cols = p.layout.cols
+	offset = p.layout.offset; hgap = p.layout.hgap; vgap = p.layout.vgap
 	sendcmd(p, "ARRANGE($rows, $cols, $offset, $hgap, $vgap)")
-	p.gdim = gdim
 	newsize = rows*cols
 	delta = newsize - length(p.graphs)
 
@@ -167,12 +190,12 @@ end
 autofit(g::GraphRef) = autofit(g, x=true, y=true)
 
 #-------------------------------------------------------------------------------
-const title_attribcmdmap = AttributeCmdMap([
-	(:value, "")
-	(:font, "FONT")
-	(:size, "SIZE")
-	(:color, "COLOR")
-])
+const title_attribcmdmap = AttributeCmdMap(
+	:value => "",
+	:font  => "FONT",
+	:size  => "SIZE",
+	:color => "COLOR",
+)
 
 settitle(g::GraphRef, a::TextAttributes) = setattrib(g, title_attribcmdmap, "TITLE ", a)
 setsubtitle(g::GraphRef, a::TextAttributes) = setattrib(g, title_attribcmdmap, "SUBTITLE ", a)
@@ -180,12 +203,12 @@ settitle(g::GraphRef, title::AbstractString) = settitle(g, text(title))
 setsubtitle(g::GraphRef, title::AbstractString) = setsubtitle(g, text(title))
 
 #-------------------------------------------------------------------------------
-const label_attribcmdmap = AttributeCmdMap([
-	(:value, "")
-	(:font, "FONT")
-	(:size, "CHAR SIZE")
-	(:color, "COLOR")
-])
+const label_attribcmdmap = AttributeCmdMap(
+	:value => "",
+	:font  => "FONT",
+	:size  => "CHAR SIZE",
+	:color => "COLOR",
+)
 
 setxlabel(g::GraphRef, a::TextAttributes) = setattrib(g, title_attribcmdmap, "XAXIS LABEL ", a)
 setylabel(g::GraphRef, a::TextAttributes) = setattrib(g, title_attribcmdmap, "YAXIS LABEL ", a)
@@ -193,20 +216,20 @@ setxlabel(g::GraphRef, label::AbstractString) = setxlabel(g, text(label))
 setylabel(g::GraphRef, label::AbstractString) = setylabel(g, text(label))
 
 #-------------------------------------------------------------------------------
-const frameline_attribcmdmap = AttributeCmdMap([
-	(:style, "LINESTYLE")
-	(:width, "LINEWIDTH")
-])
+const frameline_attribcmdmap = AttributeCmdMap(
+	:style => "LINESTYLE",
+	:width => "LINEWIDTH",
+)
 setframeline(g::GraphRef, a::LineAttributes) = setattrib(g, frameline_attribcmdmap, "FRAME ", a)
 
-const axes_attribcmdmap = AttributeCmdMap([
-	(:xmin, "WORLD XMIN"), (:xmax, "WORLD XMAX"),
-	(:ymin, "WORLD YMIN"), (:ymax, "WORLD YMAX"),
-	(:xscale, "XAXES SCALE"),
-	(:yscale, "YAXES SCALE"),
-	(:invertx, "XAXES INVERT"),
-	(:inverty, "YAXES INVERT"),
-])
+const axes_attribcmdmap = AttributeCmdMap(
+	:xmin => "WORLD XMIN", :xmax => "WORLD XMAX",
+	:ymin => "WORLD YMIN", :ymax => "WORLD YMAX",
+	:xscale  => "XAXES SCALE",
+	:yscale  => "YAXES SCALE",
+	:invertx => "XAXES INVERT",
+	:inverty => "YAXES INVERT",
+)
 setaxes(g::GraphRef, a::AxesAttributes) = setattrib(g, axes_attribcmdmap, "", a)
 
 
@@ -234,21 +257,21 @@ function add(g::GraphRef, x::DataVec, y::DataVec, args...; kwargs...)
 end
 
 #-------------------------------------------------------------------------------
-const dsline_attribcmdmap = AttributeCmdMap([
-	(:_type, "LINE TYPE")
-	(:style, "LINE LINESTYLE")
-	(:width, "LINE LINEWIDTH")
-	(:color, "LINE COLOR")
-])
+const dsline_attribcmdmap = AttributeCmdMap(
+	:_type => "LINE TYPE",
+	:style => "LINE LINESTYLE",
+	:width => "LINE LINEWIDTH",
+	:color => "LINE COLOR",
+)
 setline(ds::DatasetRef, a::LineAttributes) = setattrib(ds, dsline_attribcmdmap, a)
 
 #-------------------------------------------------------------------------------
-const glyph_attribcmdmap = AttributeCmdMap([
-	(:_type, "SYMBOL")
-	(:size, "SYMBOL SIZE")
-	(:color, "SYMBOL COLOR")
-	(:skipcount, "SYMBOL SKIP")
-])
+const glyph_attribcmdmap = AttributeCmdMap(
+	:_type     => "SYMBOL",
+	:size      => "SYMBOL SIZE",
+	:color     => "SYMBOL COLOR",
+	:skipcount => "SYMBOL SKIP",
+)
 setglyph(ds::DatasetRef, a::GlyphAttributes) = setattrib(ds, glyph_attribcmdmap, a)
 
 
@@ -260,30 +283,34 @@ const empty_listfnmap = AttributeListFunctionMap()
 const empty_fnmap = AttributeFunctionMap()
 
 #-------------------------------------------------------------------------------
-const setplot_fnmap = AttributeFunctionMap([
-	(:active, setactive)
-	(:focus, setfocus)
-])
-set(g::Plot, args...; kwargs...) = set(g, empty_listfnmap, setplot_fnmap, args...; kwargs...)
+const setplot_listfnmap = AttributeListFunctionMap(
+	PageSizeAttributes => setpagesize,
+	LayoutAttributes => setlayout,
+)
+const setplot_fnmap = AttributeFunctionMap(
+	:active => setactive,
+	:focus  => setfocus,
+)
+set(g::Plot, args...; kwargs...) = set(g, setplot_listfnmap, setplot_fnmap, args...; kwargs...)
 
 #-------------------------------------------------------------------------------
-const setgraph_listfnmap = AttributeListFunctionMap([
-	(AxesAttributes, setaxes)
-])
-const setgraph_fnmap = AttributeFunctionMap([
-	(:title, settitle)
-	(:subtitle, setsubtitle)
-	(:xlabel, setxlabel)
-	(:ylabel, setylabel)
-	(:frameline, setframeline)
-])
+const setgraph_listfnmap = AttributeListFunctionMap(
+	AxesAttributes => setaxes,
+)
+const setgraph_fnmap = AttributeFunctionMap(
+	:title     => settitle,
+	:subtitle  => setsubtitle,
+	:xlabel    => setxlabel,
+	:ylabel    => setylabel,
+	:frameline => setframeline,
+)
 set(g::GraphRef, args...; kwargs...) = set(g, setgraph_listfnmap, setgraph_fnmap, args...; kwargs...)
 
 #-------------------------------------------------------------------------------
-const setline_listfnmap = AttributeListFunctionMap([
-	(LineAttributes, setline)
-	(GlyphAttributes, setglyph)
-])
+const setline_listfnmap = AttributeListFunctionMap(
+	LineAttributes  => setline,
+	GlyphAttributes => setglyph,
+)
 set(g::DatasetRef, args...; kwargs...) = set(g, setline_listfnmap, empty_fnmap, args...; kwargs...)
 
 #Last line
