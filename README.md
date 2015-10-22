@@ -4,9 +4,11 @@
 
 The GracePlot.jl module is a simple control interface for Grace/xmgrace - providing more publication-quality plotting facilities to Julia.
 
-## Sample Code
+## Samples
 
-The [test](test/) directory contains a few demonstrations on how to use GracePlot.jl.
+The [sample](sample/) directory contains a few demonstrations on how to use GracePlot.jl.
+
+The [template](sample/template/) directory contains a repository of sample Grace template (parameter) files.
 
 ## Dependencies
 
