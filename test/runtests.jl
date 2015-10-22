@@ -2,7 +2,8 @@
 #-------------------------------------------------------------------------------
 
 #No real test code yet... just run demos:
-include("../sample/demo1.jl")
-include("../sample/demo2.jl")
+for i in 1:3
+	include("../sample/demo$i.jl")
+end
 
 :Test_Complete

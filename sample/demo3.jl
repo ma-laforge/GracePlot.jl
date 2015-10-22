@@ -1,4 +1,5 @@
-#GracePlot demonstration 2: Generate .svg
+#GracePlot demonstration 3: Generate proper plot & save/export
+#(Uses template to avoid specifying too many parameters)
 #-------------------------------------------------------------------------------
 
 using GracePlot
@@ -12,27 +13,29 @@ y1 = sin(x)
 y2 = cos(x)
 engpaper = GracePlot.template("engpaper_mono")
 
+
 #=="Defaults"
 ===============================================================================#
 
 
-#==Plot 1: Basics (use template to avoid specifying too many parameters)
+#==Generate plot
 ===============================================================================#
-plt = GracePlot.new(fixedcanvas=true, template=engpaper)
-g = graph(plt, 0)
+plot = GracePlot.new(template=engpaper)
+g = graph(plot, 0)
 	#No point in having a title with this particular template:
 #	set(g, title = "Grace SVG Plot", subtitle = "(\\f{Times-Italic}y\\s1\\N=sin(x), y\\s2\\N=cos(x)\\f{})")
 	set(g, xlabel = "Angle (rad)", ylabel = "Amplitude")
-	ds = add(g, x, y1)
-	ds = add(g, x, y2)
+	#Add datasets:
+		ds = add(g, x, y1)
+		ds = add(g, x, y2)
 	autofit(g)
 
 #Finalize:
-redraw(plt)
+redraw(plot)
 
 #Save plot in multiple formats:
-save(plt, "sinewaveplot.agr")
-save(File{EPSFmt}, plt, "sinewaveplot.eps")
-save(File{SVGFmt}, plt, "sinewaveplot.svg")
-save(File{PNGFmt}, plt, "sinewaveplot.png")
+save(plot, "sinewaveplot.agr")
+save(File{EPSFmt}, plot, "sinewaveplot.eps")
+save(File{SVGFmt}, plot, "sinewaveplot.svg")
+save(File{PNGFmt}, plot, "sinewaveplot.png")
 #Last line
