@@ -35,7 +35,7 @@ redraw(plot)
 
 #Save plot in multiple formats:
 save(plot, "sinewaveplot.agr")
-save(File{EPSFmt}, plot, "sinewaveplot.eps")
-save(File{SVGFmt}, plot, "sinewaveplot.svg")
-save(File{PNGFmt}, plot, "sinewaveplot.png")
+save(plot, File{EPSFmt}("sinewaveplot.eps"))
+save(plot, File{SVGFmt}("sinewaveplot.svg"))
+save(plot, File{PNGFmt}("sinewaveplot.png"))
 #Last line

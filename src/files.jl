@@ -28,27 +28,30 @@ end
 
 #Save a Grace plot:
 #-------------------------------------------------------------------------------
-function FileIO2.save(p::Plot, path::AbstractString)
+function FileIO2.save(p::Plot, file::File{ParamFmt})
+	path = file.path
 	@assert !contains(path, "\"") "File path contains '\"'."
 	sendcmd(p, "SAVEALL \"$path\"")
 end
+FileIO2.save(p::Plot, path::AbstractString) = save(p, File{ParamFmt}(path))
+
 
 #Save to PNG (avoid use of "export" keyword):
 #-------------------------------------------------------------------------------
-FileIO2.save(::Type{File{PNGFmt}}, p::Plot, filepath::AbstractString) = exportplot(p, "PNG", filepath)
+FileIO2.save(p::Plot, file::File{PNGFmt}) = exportplot(p, "PNG", file.path)
 
 #Save to EPS (avoid use of "export" keyword):
 #-------------------------------------------------------------------------------
-function FileIO2.save(::Type{File{EPSFmt}}, p::Plot, filepath::AbstractString) 
+function FileIO2.save(p::Plot, file::File{EPSFmt})
 	sendcmd(p, "DEVICE \"EPS\" OP \"bbox:page\"")
-	exportplot(p, "EPS", filepath)
+	exportplot(p, "EPS", file.path)
 end
 
 #Export to SVG.  (Fix Grace output according W3C 1999 format):
 #TODO: Make more robust... use more try/catch.
 #NOTE: Replace xml (svg) statements using Julia v3 compatibility.
 #-------------------------------------------------------------------------------
-function FileIO2.save(::Type{File{SVGFmt}}, p::Plot, filepath::AbstractString)
+function FileIO2.save(p::Plot, file::File{SVGFmt})
 	tmpfilepath = "./.tempgraceplotexport.svg"
 	#Export to svg, using the native Grace format:
 	exportplot(p, "SVG", tmpfilepath)
@@ -90,7 +93,7 @@ function FileIO2.save(::Type{File{SVGFmt}}, p::Plot, filepath::AbstractString)
 	cap1 = captures[1]; cap2 = captures[2]
 	filedat = replace(filedat, pat, "$cap1 xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" $cap2")
 
-	dest = open(filepath, "w")
+	dest = open(file.path, "w")
 	write(dest, filedat)
 	close(dest)
 
