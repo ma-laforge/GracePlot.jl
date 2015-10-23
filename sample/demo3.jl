@@ -11,19 +11,18 @@ using FileIO2
 x=collect(-1:0.02:1).*pi
 y1 = sin(x)
 y2 = cos(x)
-engpaper = GracePlot.template("engpaper_mono")
 
 
 #=="Defaults"
 ===============================================================================#
+smallplot = GracePlot.template("smallplot_mono")
 
 
 #==Generate plot
 ===============================================================================#
-plot = GracePlot.new(template=engpaper)
+plot = GracePlot.new(template=smallplot)
 g = graph(plot, 0)
-	#No point in having a title with this particular template:
-#	set(g, title = "Grace SVG Plot", subtitle = "(\\f{Times-Italic}y\\s1\\N=sin(x), y\\s2\\N=cos(x)\\f{})")
+	set(g, title = "Grace SVG Plot", subtitle = "(\\f{Times-Italic}y\\s1\\N=sin(x), y\\s2\\N=cos(x)\\f{})")
 	set(g, xlabel = "Angle (rad)", ylabel = "Amplitude")
 	#Add datasets:
 		ds = add(g, x, y1)

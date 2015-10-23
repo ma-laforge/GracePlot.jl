@@ -31,21 +31,11 @@ type Graph
 end
 
 #-------------------------------------------------------------------------------
-type PageSizeAttributes <: AttributeList
+type CanvasAttributes <: AttributeList
 	width::AbstractLength
 	height::AbstractLength
 end
-pagesize(width::AbstractLength, height::AbstractLength) = PageSizeAttributes(width, height)
-
-#-------------------------------------------------------------------------------
-type LayoutAttributes <: AttributeList
-	rows
-	cols
-	offset
-	hgap
-	vgap
-end
-eval(genexpr_attriblistbuilder(:layout, LayoutAttributes)) #"layout" constructor
+canvas(width::AbstractLength, height::AbstractLength) = CanvasAttributes(width, height)
 
 #-------------------------------------------------------------------------------
 type Plot
@@ -54,11 +44,9 @@ type Plot
 
 	#Width/height stored so user knows what it is
 	#>>Smallest of height/width is considered unity by Grace<<
-	page::PageSizeAttributes
-	#Layout also stored, because all attributes are manipulated with single command:
-	layout::LayoutAttributes
+	canvas::CanvasAttributes
 
-	gdim::GraphCoord
+	ncols::Int #Number of columns assumed when accessing graphs with GraphCoord
 	graphs::Vector{Graph}
 	activegraph::Int
 	log::Bool #set to true to log commands
@@ -76,6 +64,13 @@ type DatasetRef
 	graph::GraphRef
 	id::Int
 end
+
+#-------------------------------------------------------------------------------
+type CartesianLimAttributes <: AttributeList
+	xmin; xmax
+	ymin; ymax
+end
+eval(genexpr_attriblistbuilder(:limits, CartesianLimAttributes)) #"limits" constructor
 
 #-------------------------------------------------------------------------------
 type TextAttributes <: AttributeList
@@ -181,19 +176,19 @@ function new(; fixedcanvas::Bool=true, template=nothing)
 	#Default width/height (16cm x 10cm - roughly golden ratio):
 	const c = 0.01 #centi
 	h = 20c; w = h*defaultcanvasratio
-	sz = pagesize(Meter(w), Meter(h))
-	lyt = layout(rows=1, cols=1, offset=0.15, hgap=0.15, vgap=0.15)
+	ncols = 2 #Assume 2 graph columns, by default
 
-	plot = Plot(pipe, process, sz, lyt, (0, 0),
+	plot = Plot(pipe, process, canvas(Meter(w), Meter(h)), ncols,
 		Graph[Graph()], activegraph, false
 	)
-	#At this point, sz & lyt are still basically meaningless...
+	#At this point, plot.canvas is still basically meaningless...
 
-	#Only set plot page size/layout (send to xmgrace) if not reading template...
-	#(Template might already have a page size set)
-	#...So when templates are used, the value of plot.page/layout is meaningless...
+	#Only update plot canvas size (send to xmgrace) if not reading template...
+	#(Template might already have a canvas size set)
+	#...So when templates are used, the value of plot.canvas is meaningless...
 	if nothing == template
-		set(plot, sz, lyt)
+		set(plot, plot.canvas)
+		arrange(plot, (1, 1)) #Fit plot to new canvas size
 	end
 
 	return plot
@@ -201,7 +196,7 @@ end
 
 Plot() = new() #Alias for code using type name for constructor.
 
-graphindex(g::GraphRef) = ((row,col)=g.coord; return g.plot.gdim[2]*row+col)
+graphindex(g::GraphRef) = ((row,col)=g.coord; return g.plot.ncols*row+col)
 graph(p::Plot, args...) = GraphRef(p, args...) #Link constructor to exported function
 graphdata(g::GraphRef) = g.plot.graphs[graphindex(g)+1]
 

@@ -22,7 +22,7 @@ loglin = axes(xscale = gconst[:log], yscale = gconst[:lin])
 ===============================================================================#
 plot = GracePlot.new()
 	#Try a multi-graph plot:
-	set(plot, layout(rows=3, cols=2, offset=0.08, hgap=0.15, vgap=0.3))
+	arrange(plot, (3, 2), offset=0.08, hgap=0.15, vgap=0.3)
 g = graph(plot, (1, 2)) #Get a reference to graph (1,2)
 	txt = text("Parabola (\\f{Times-Italic}y=x\\f{}\\S2\\N)", size=2)
 	set(g, xlabel = text("x-axis", color=2), ylabel = "y-axis")

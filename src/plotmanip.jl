@@ -98,16 +98,31 @@ function set(obj::Any, listfnmap::AttributeListFunctionMap, fnmap::AttributeFunc
 	return
 end
 
+#Core algorithm for "get" interface:
+#-------------------------------------------------------------------------------
+function getattrib(obj::Any, fnmap::AttributeFunctionMap, attrib::Symbol)
+	getfn = get(fnmap, attrib, nothing)
+
+	if nothing == getfn
+		argstr = string(attrib)
+		objtype = typeof(obj)
+		throw("Argument \"$argstr\" not recognized by \"set(::$objtype, ...)\"")
+	end
+
+	return getfn(obj)
+end
+
 
 #==Plot-level functionality
 ===============================================================================#
 
 #-------------------------------------------------------------------------------
+updateall(p::Plot) = sendcmd(p, "UPDATEALL")
 redraw(p::Plot) = sendcmd(p, "REDRAW")
 
 #-------------------------------------------------------------------------------
-function setpagesize(p::Plot, a::PageSizeAttributes)
-	p.page = a
+function setpagesize(p::Plot, a::CanvasAttributes)
+	p.canvas = a
 	width = round(Int, val(TPoint(a.width)))
 	height = round(Int, val(TPoint(a.height)))
 	sendcmd(p, "PAGE SIZE $width, $height")
@@ -116,17 +131,51 @@ function setpagesize(p::Plot, a::PageSizeAttributes)
 	return a
 end
 
+#Return cached canvas width/height
 #-------------------------------------------------------------------------------
-function setlayout(p::Plot, a::LayoutAttributes)
-	copynew!(p.layout, a)
-	rows = p.layout.rows; cols = p.layout.cols
-	offset = p.layout.offset; hgap = p.layout.hgap; vgap = p.layout.vgap
+getwcanvas(p::Plot) = p.canvas.width
+gethcanvas(p::Plot) = p.canvas.height
+
+#Obtain "VIEW" width/height (given cached canvas width/height)
+#-------------------------------------------------------------------------------
+function getaspectratio(p::Plot)
+	w = val(TPoint(p.canvas.width))
+	h = val(TPoint(p.canvas.height))
+	return w/h
+end
+
+#Return canvas width in normalized "view" coordinates:
+function getwview(p::Plot)
+	ar=getaspectratio(p)
+	return (ar>1) ? ar : 1
+end
+
+#Return canvas width in normalized "view" coordinates:
+function gethview(p::Plot)
+	ar=getaspectratio(p)
+	return (ar>1) ? 1 : (1/ar)
+end
+
+#-------------------------------------------------------------------------------
+setnumcols(p::Plot, cols::Int) = (p.ncols = cols)
+
+#-------------------------------------------------------------------------------
+function arrange(p::Plot, gdim::GraphCoord; offset=0.15, hgap=0.15, vgap=0.15)
+	(rows, cols) = gdim
 	sendcmd(p, "ARRANGE($rows, $cols, $offset, $hgap, $vgap)")
+	setnumcols(p, cols)
 	newsize = rows*cols
 	delta = newsize - length(p.graphs)
 
 	for i in 1:delta
 		push!(p.graphs, Graph())
+	end
+
+	if delta < 0
+		resize!(p.graphs, newsize)
+		if p.activegraph >= newsize
+			setactive(graph(p, newsize-1))
+		end
 	end
 end
 
@@ -143,11 +192,11 @@ end
 #-------------------------------------------------------------------------------
 function setactive(g::GraphRef)
 	gidx = graphindex(g)
-	if gidx == g.plot.activegraph
-		return 0 #Already active
+	if g.plot.activegraph != gidx
+		g.plot.activegraph = gidx
+		sendcmd(g.plot, "WITH G$gidx")
 	end
-	g.plot.activegraph = gidx
-	sendcmd(g.plot, "WITH G$gidx")
+	return gidx
 end
 
 #-------------------------------------------------------------------------------
@@ -170,6 +219,21 @@ function setfocus(p::Plot, g::GraphRef)
 end
 #-------------------------------------------------------------------------------
 
+#Add new graph to a plot
+#NOTE: update = true sends UPDATEALL command to avoid having the GUI out of
+#      sync with the plot itself. User expected to call updateall manually when
+#      using update=false
+#-------------------------------------------------------------------------------
+function add(p::Plot, args...; update=true, kwargs...)
+	gidx = length(p.graphs)
+	g = graph(p, gidx)
+	sendcmd(p, "G$gidx ON")
+	setactive(g)
+	if update; updateall(); end
+
+	return g
+end
+
 #NOTE: AUTOSCALE X/Y does not seem to work...
 #-------------------------------------------------------------------------------
 function autofit(g::GraphRef; x=false, y=false)
@@ -188,6 +252,16 @@ function autofit(g::GraphRef; x=false, y=false)
 	sendcmd(g.plot, cmd)
 end
 autofit(g::GraphRef) = autofit(g, x=true, y=true)
+
+#-------------------------------------------------------------------------------
+const limits_attribcmdmap = AttributeCmdMap(
+	:xmin => "XMIN",
+	:xmax => "XMAX",
+	:ymin => "YMIN",
+	:ymax => "YMAX",
+)
+
+setview(g::GraphRef, a::CartesianLimAttributes) = setattrib(g, limits_attribcmdmap, "VIEW ", a)
 
 #-------------------------------------------------------------------------------
 const title_attribcmdmap = AttributeCmdMap(
@@ -284,20 +358,21 @@ const empty_fnmap = AttributeFunctionMap()
 
 #-------------------------------------------------------------------------------
 const setplot_listfnmap = AttributeListFunctionMap(
-	PageSizeAttributes => setpagesize,
-	LayoutAttributes => setlayout,
+	CanvasAttributes => setpagesize,
 )
 const setplot_fnmap = AttributeFunctionMap(
+	:ncols  => setnumcols,
 	:active => setactive,
 	:focus  => setfocus,
 )
-set(g::Plot, args...; kwargs...) = set(g, setplot_listfnmap, setplot_fnmap, args...; kwargs...)
+set(p::Plot, args...; kwargs...) = set(p, setplot_listfnmap, setplot_fnmap, args...; kwargs...)
 
 #-------------------------------------------------------------------------------
 const setgraph_listfnmap = AttributeListFunctionMap(
 	AxesAttributes => setaxes,
 )
 const setgraph_fnmap = AttributeFunctionMap(
+	:view      => setview,
 	:title     => settitle,
 	:subtitle  => setsubtitle,
 	:xlabel    => setxlabel,
@@ -311,6 +386,16 @@ const setline_listfnmap = AttributeListFunctionMap(
 	LineAttributes  => setline,
 	GlyphAttributes => setglyph,
 )
-set(g::DatasetRef, args...; kwargs...) = set(g, setline_listfnmap, empty_fnmap, args...; kwargs...)
+set(ds::DatasetRef, args...; kwargs...) = set(ds, setline_listfnmap, empty_fnmap, args...; kwargs...)
+
+#==Define cleaner "get" interface (minimize # of "export"-ed functions)
+===============================================================================#
+const getplot_fnmap = AttributeFunctionMap(
+	:wcanvas  => getwcanvas,
+	:hcanvas  => gethcanvas,
+	:wview    => getwview,
+	:hview    => gethview,
+)
+Base.get(p::Plot, attrib::Symbol) = getattrib(p, getplot_fnmap, attrib)
 
 #Last line

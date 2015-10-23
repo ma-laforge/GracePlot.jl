@@ -30,10 +30,11 @@ const gconst = Dict{Symbol, GraceConstLitteral}(
 
 #==Exported symbols
 ===============================================================================#
+export arrange #Re-tile plot with specified number of rows/cols
 export graph #Obtain reference to an individual graph
 export autofit #Re-compute axes to fit data
 export add #Add new dataset
-export set #Set Plot/Graph properties
+export set #Set Plot/Graph/Dataset properties
 #   set(::Plot, arg1, arg2, ..., kwarg1=v1, kwarg2=v1, ...)
 #      kwargs: active, focus,
 #   set(::GraphRef, arg1, arg2, ..., kwarg1=v1, kwarg2=v1, ...)
@@ -41,8 +42,8 @@ export set #Set Plot/Graph properties
 #      kwargs: title, subtitle, xlabel, ylabel, frameline
 #   set(::DatasetRef, arg1, arg2, ..., kwarg1=v1, kwarg2=v1, ...)
 #      args: line(), glyph()
-export pagesize #Creates PageSizeAttributes to resize plot canvas
-export layout #Creates LayoutAttributes to re-tile plot different # of graphs
+export canvas #Creates CanvasAttributes to resize plot, etc
+export limits #Creates CartesianLimAttributes to set view, world, ...
 export text #Creates TextAttributes to set titles, etc
 export axes #Creates AxesAttributes to modify axis
 export line #Creates LineAttributes to modify line
@@ -58,6 +59,7 @@ Other interface tools (symbols not exported to avoid collisions):
 	kill(graph): Kill already in Base.
 	template("<GracePlot-provided template name>")
 	File{GracePlot.ParamFmt}("filename.par")
+	Base.get.... get is already part of base, so can't export it...
 ==#
 
 end #GracePlot
