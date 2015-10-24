@@ -1,4 +1,4 @@
-#GracePlot demonstration 4: More advanced tests
+#GracePlot demonstration 4: simple 2x2 array of subplots
 #-------------------------------------------------------------------------------
 
 using GracePlot
@@ -6,34 +6,37 @@ using GracePlot
 #==Input data
 ===============================================================================#
 x=collect(-10:0.1:10)
-y2 = x.^2
-y3 = x.^3
+y = []
+for i in 1:4
+	push!(y, (x.^i)./(10^i)) #Normalized powers of x 
+end
+titles = ["Linear", "Quadratic", "Cubic", "Quartic"]
 
 
 #=="Defaults"
 ===============================================================================#
-smallplot = GracePlot.template("smallplot_mono")
-defltline = line(width=2.5, color=1)
-defltframeline = line(width=2.5)
-loglin = axes(xscale = gconst[:log], yscale = gconst[:lin])
+template = GracePlot.template("plot2x2thick_mono")
 
 
 #==Generate plot
 ===============================================================================#
-#plot = GracePlot.new(fixedcanvas=true)
-plot = GracePlot.new(fixedcanvas=true, template=smallplot)
-#throw("stop")
-	set(plot, plot.canvas) #Force default canvas size (ignore template size)
-	w = get(plot, :wview); h = get(plot, :hview)
-g = graph(plot, 0)
-	set(g, view=limits(xmin=.15, xmax=w-.15, ymin=.15, ymax=h-.15))
-	set(g, title = "Title", subtitle = "Subtitle")
-		ds = add(g, x, y2)
-		ds = add(g, x, 2.*y2)
-		ds = add(g, x, 3.*y2)
-		ds = add(g, x, 4.*y2)
+plot = GracePlot.new(fixedcanvas=true, template=template)
+#Add 4 subplots:
+for gidx in 0:3
+	g = graph(plot, gidx)
+	set(g, subtitle = titles[gidx+1])
+
+	#Add 10 datasets:
+	for i in 1:10
+		ds = add(g, x, i.*y[gidx+1])
+	end
+
 	autofit(g)
-#throw("stop")
+	add(plot) #next graph
+end
+
+#Hack: Trash last added graph:
+GracePlot.sendcmd(plot, "G4 OFF")
 
 #Finalize:
 redraw(plot)

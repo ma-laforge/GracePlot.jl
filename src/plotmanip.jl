@@ -226,10 +226,11 @@ end
 #-------------------------------------------------------------------------------
 function add(p::Plot, args...; update=true, kwargs...)
 	gidx = length(p.graphs)
+	push!(p.graphs, Graph())
 	g = graph(p, gidx)
 	sendcmd(p, "G$gidx ON")
-	setactive(g)
-	if update; updateall(); end
+#	setactive(g)
+	if update; updateall(p); end
 
 	return g
 end

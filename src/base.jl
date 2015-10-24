@@ -55,9 +55,8 @@ end
 #-------------------------------------------------------------------------------
 type GraphRef
 	plot::Plot
-	coord::GraphCoord
+	index::Int
 end
-GraphRef(p::Plot, idx::Int) = GraphRef(p, (idx, 0))
 
 #-------------------------------------------------------------------------------
 type DatasetRef
@@ -173,7 +172,7 @@ function new(; fixedcanvas::Bool=true, template=nothing)
 	(pipe, process) = open(cmd, "w")
 	activegraph = -1 #None active @ start
 
-	#Default width/height (16cm x 10cm - roughly golden ratio):
+	#Default width/height (32cm x 20cm - roughly golden ratio):
 	const c = 0.01 #centi
 	h = 20c; w = h*defaultcanvasratio
 	ncols = 2 #Assume 2 graph columns, by default
@@ -196,8 +195,10 @@ end
 
 Plot() = new() #Alias for code using type name for constructor.
 
-graphindex(g::GraphRef) = ((row,col)=g.coord; return g.plot.ncols*row+col)
-graph(p::Plot, args...) = GraphRef(p, args...) #Link constructor to exported function
+graphindex(g::GraphRef) = g.index
+graph(p::Plot, idx::Int) = GraphRef(p, idx)
+graph(p::Plot, coord::GraphCoord) =
+	((row,col) = coord; return GraphRef(p, p.ncols*row+col))
 graphdata(g::GraphRef) = g.plot.graphs[graphindex(g)+1]
 
 #==Communication
