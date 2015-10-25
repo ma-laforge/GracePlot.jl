@@ -45,9 +45,7 @@ setattrib(p::Plot, cmd::AbstractString, value::Symbol) =
 
 #Set graph attributes for a given element:
 #-------------------------------------------------------------------------------
-function setattrib(g::GraphRef, fmap::AttributeCmdMap, prefix::AbstractString, data::Any)
-	setactive(g)
-
+function setattrib(p::Plot, fmap::AttributeCmdMap, prefix::AbstractString, data::Any)
 	for attrib in fieldnames(data)
 		v = eval(:($data.$attrib))
 
@@ -55,7 +53,7 @@ function setattrib(g::GraphRef, fmap::AttributeCmdMap, prefix::AbstractString, d
 			subcmd = get(fmap, attrib, nothing)
 
 			if subcmd != nothing
-				setattrib(g.plot, "$prefix$subcmd", v)
+				setattrib(p, "$prefix$subcmd", v)
 			else
 				dtype = typeof(data)
 				warn("Attribute \"$attrib\" of $dtype not currently supported.")
@@ -64,11 +62,18 @@ function setattrib(g::GraphRef, fmap::AttributeCmdMap, prefix::AbstractString, d
 	end
 end
 
+#Set graph attributes for a given element:
+#-------------------------------------------------------------------------------
+function setattrib(g::GraphRef, fmap::AttributeCmdMap, prefix::AbstractString, data::Any)
+	setactive(g)
+	return setattrib(g.plot, fmap, prefix, data)
+end
+
 #Set dataset attribute:
 #-------------------------------------------------------------------------------
 function setattrib(ds::DatasetRef, fmap::AttributeCmdMap, data::Any)
 	dsid = ds.id
-	setattrib(ds.graph, fmap::AttributeCmdMap, "S$dsid ", data::Any)
+	setattrib(ds.graph, fmap, "S$dsid ", data)
 end
 
 #Core algorithm for "set" interface:
@@ -121,6 +126,23 @@ end
 #-------------------------------------------------------------------------------
 updateall(p::Plot) = sendcmd(p, "UPDATEALL")
 redraw(p::Plot) = sendcmd(p, "REDRAW")
+
+#-------------------------------------------------------------------------------
+function clearall(p::Plot; update::Bool=true, killdata::Bool=true)
+	#Delete graphs in reverse order
+	#(Grace wants to keep around lower numbered graphs)
+	for gidx in (length(p.graphs):-1:1)-1
+		clearall(graph(p, gidx), update=false, killdata=killdata)
+	end
+
+	#Trash old graph info:
+	p.graphs = Graph[]
+
+	#Sync up UI, if desired:
+	if update
+		updateall(p)
+	end
+end
 
 #-------------------------------------------------------------------------------
 function setpagesize(p::Plot, a::CanvasAttributes)
@@ -181,14 +203,27 @@ function arrange(p::Plot, gdim::GraphCoord; offset=0.15, hgap=0.15, vgap=0.15)
 	end
 end
 
- 
+#-------------------------------------------------------------------------------
+const defaults_attribcmdmap = AttributeCmdMap(
+	:linewidth  => "LINEWIDTH",
+	:linestyle  => "LINESTYLE",
+	:color      => "COLOR",
+	:pattern    => "PATTERN",
+	:font       => "FONT",
+	:charsize   => "CHAR SIZE",
+	:symbolsize => "SYMBOL SIZE",
+	:sformat    => "SFORMAT",
+)
+
+setdefaults(p::Plot, a::DefaultAttributes) = setattrib(p, defaults_attribcmdmap, "DEFAULT ", a)
+
 #==Graph-level functionality
 ===============================================================================#
 
 #-------------------------------------------------------------------------------
 function Base.kill(g::GraphRef)
 	gidx = graphindex(g)
-	sendcmd(g.plot, "KILL g$gidx")
+	sendcmd(g.plot, "KILL G$gidx")
 end
 
 #-------------------------------------------------------------------------------
@@ -221,6 +256,32 @@ function setfocus(p::Plot, g::GraphRef)
 end
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+function setenable(g::GraphRef, value::Bool)
+	v = graceconstmap[value? (:on) : (:off)]
+	gidx = graphindex(g)
+	setattrib(g.plot, "G$gidx", v)
+end
+
+#-------------------------------------------------------------------------------
+function clearall(g::GraphRef; update::Bool=true, killdata::Bool=true)
+	setenable(g, false)
+	gdata = graphdata(g)
+
+	if killdata
+		#Delete datasets in reverse order
+		#(Grace wants to keep around lower numbered datasets)
+		for idx in (gdata.datasetcount-1:-1:0)
+			killdataset(g, idx)
+		end
+	end
+
+	#Sync up UI, if desired:
+	if update
+		updateall(p)
+	end
+end
+
 #Add new graph to a plot
 #NOTE: update = true sends UPDATEALL command to avoid having the GUI out of
 #      sync with the plot itself. User expected to call updateall manually when
@@ -230,7 +291,7 @@ function add(p::Plot, args...; update=true, kwargs...)
 	gidx = length(p.graphs)
 	push!(p.graphs, Graph())
 	g = graph(p, gidx)
-	sendcmd(p, "G$gidx ON")
+	setenable(g, true)
 #	setactive(g)
 	if update; updateall(p); end
 
@@ -313,6 +374,13 @@ setaxes(g::GraphRef, a::AxesAttributes) = setattrib(g, axes_attribcmdmap, "", a)
 #==Dataset-level functionality
 ===============================================================================#
 
+#Sadly, appears to be no way to kill data without linestyle, etc...
+#-------------------------------------------------------------------------------
+function killdataset(g::GraphRef, index::Int)
+	gidx = graphindex(g)
+	sendcmd(g.plot, "KILL G$gidx.S$index")
+end
+
 #-------------------------------------------------------------------------------
 function add(g::GraphRef, x::DataVec, y::DataVec, args...; kwargs...)
 	@assert length(x) == length(y) "GracePlot.add(): x & y vlengths must match."
@@ -344,10 +412,17 @@ setline(ds::DatasetRef, a::LineAttributes) = setattrib(ds, dsline_attribcmdmap, 
 
 #-------------------------------------------------------------------------------
 const glyph_attribcmdmap = AttributeCmdMap(
-	:_type     => "SYMBOL",
-	:size      => "SYMBOL SIZE",
-	:color     => "SYMBOL COLOR",
-	:skipcount => "SYMBOL SKIP",
+	:shape       => "SYMBOL",
+	:size        => "SYMBOL SIZE",
+	:color       => "SYMBOL COLOR",
+	:pattern     => "SYMBOL PATTERN",
+	:fillcolor   => "SYMBOL FILL COLOR",
+	:fillpattern => "SYMBOL FILL PATTERN",
+	:linewidth   => "SYMBOL LINEWIDTH",
+	:linestyle   => "SYMBOL LINESTYLE",
+	:char        => "SYMBOL CHAR",
+	:charfont    => "SYMBOL CHAR FONT",
+	:skipcount   => "SYMBOL SKIP",
 )
 setglyph(ds::DatasetRef, a::GlyphAttributes) = setattrib(ds, glyph_attribcmdmap, a)
 
@@ -361,7 +436,8 @@ const empty_fnmap = AttributeFunctionMap()
 
 #-------------------------------------------------------------------------------
 const setplot_listfnmap = AttributeListFunctionMap(
-	CanvasAttributes => setpagesize,
+	CanvasAttributes  => setpagesize,
+	DefaultAttributes => setdefaults,
 )
 const setplot_fnmap = AttributeFunctionMap(
 	:ncols  => setnumcols,
@@ -375,6 +451,7 @@ const setgraph_listfnmap = AttributeListFunctionMap(
 	AxesAttributes => setaxes,
 )
 const setgraph_fnmap = AttributeFunctionMap(
+	:enable    => setenable,
 	:view      => setview,
 	:title     => settitle,
 	:subtitle  => setsubtitle,

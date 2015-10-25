@@ -17,10 +17,14 @@ include("files.jl")
 
 #==Exported symbols
 ===============================================================================#
-export arrange #Re-tile plot with specified number of rows/cols
-export graph #Obtain reference to an individual graph
+export redraw #Whole plot
 export autofit #Re-compute axes to fit data
-export add #Add new dataset
+export arrange #Re-tile plot with specified number of rows/cols
+export clearall #clearall(Plot): Graphs or clearall(Graph): datasets
+
+export graph #Obtain reference to an individual graph
+export add #Add new dataset/graph
+
 export set #Set Plot/Graph/Dataset properties
 #   set(::Plot, arg1, arg2, ..., kwarg1=v1, kwarg2=v1, ...)
 #      kwargs: active, focus,
@@ -29,13 +33,13 @@ export set #Set Plot/Graph/Dataset properties
 #      kwargs: title, subtitle, xlabel, ylabel, frameline
 #   set(::DatasetRef, arg1, arg2, ..., kwarg1=v1, kwarg2=v1, ...)
 #      args: line(), glyph()
+export defaults #Creates DefaultAttributes to set default plot attributes
 export canvas #Creates CanvasAttributes to resize plot, etc
 export limits #Creates CartesianLimAttributes to set view, world, ...
 export text #Creates TextAttributes to set titles, etc
 export axes #Creates AxesAttributes to modify axis
 export line #Creates LineAttributes to modify line
 export glyph #Creates GlyphAttributes to modify glyph
-export redraw #Whole plot
 
 #==
 Other interface tools (symbols not exported to avoid collisions):

@@ -21,10 +21,10 @@ template = GracePlot.template("plot2x2thick_mono")
 #==Generate plot
 ===============================================================================#
 plot = GracePlot.new(fixedcanvas=true, template=template)
+clearall(plot)
 #Add 4 subplots:
 for gidx in 0:3
-	g = graph(plot, gidx)
-	set(g, subtitle = titles[gidx+1])
+	g = add(plot, subtitle = titles[gidx+1])
 
 	#Add 10 datasets:
 	for i in 1:10
@@ -32,11 +32,7 @@ for gidx in 0:3
 	end
 
 	autofit(g)
-	add(plot) #next graph
 end
-
-#Hack: Trash last added graph:
-GracePlot.sendcmd(plot, "G4 OFF")
 
 #Finalize:
 redraw(plot)

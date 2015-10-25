@@ -19,6 +19,17 @@ const graceconstmap = Dict{Symbol, GraceConstLitteral}(
 	:lin        => GraceConstLitteral("NORMAL"),
 	:log        => GraceConstLitteral("LOGARITHMIC"),
 	:reciprocal => GraceConstLitteral("RECIPROCAL"),
+	#Common
+	:none       => GraceConstLitteral("0"), #Linestyle, ..
+	#Line styles:
+	:solid       => GraceConstLitteral("1"),
+	:dot         => GraceConstLitteral("2"),
+	:dash        => GraceConstLitteral("3"),
+	:ldash       => GraceConstLitteral("4"),
+	:dotdash     => GraceConstLitteral("5"),
+	:dotldash    => GraceConstLitteral("6"),
+	:dotdotdash  => GraceConstLitteral("7"),
+	:dotdashdash => GraceConstLitteral("8"),
 )
 
 #Last line

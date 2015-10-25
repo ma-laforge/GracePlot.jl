@@ -7,7 +7,6 @@ using FileIO2
 
 #==Input data
 ===============================================================================#
-#x=collect(-1:0.1:1).*pi
 x=collect(-1:0.02:1).*pi
 y1 = sin(x)
 y2 = cos(x)
@@ -21,8 +20,8 @@ smallplot = GracePlot.template("smallplot_mono")
 #==Generate plot
 ===============================================================================#
 plot = GracePlot.new(template=smallplot)
-g = graph(plot, 0)
-	set(g, title = "Grace SVG Plot", subtitle = "(\\f{Times-Italic}y\\s1\\N=sin(x), y\\s2\\N=cos(x)\\f{})")
+g = add(plot, title = "Grace SVG Plot")
+	set(g, subtitle = "(\\f{Times-Italic}y\\s1\\N=sin(x), y\\s2\\N=cos(x)\\f{})")
 	set(g, xlabel = "Angle (rad)", ylabel = "Amplitude")
 	#Add datasets:
 		ds = add(g, x, y1)

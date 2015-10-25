@@ -58,6 +58,19 @@ type DatasetRef
 end
 
 #-------------------------------------------------------------------------------
+type DefaultAttributes <: AttributeList
+	linewidth
+	linestyle
+	color
+	pattern
+	font
+	charsize
+	symbolsize
+	sformat
+end
+eval(genexpr_attriblistbuilder(:defaults, DefaultAttributes)) #"defaults" constructor
+
+#-------------------------------------------------------------------------------
 type CartesianLimAttributes <: AttributeList
 	xmin; xmax
 	ymin; ymax
@@ -85,7 +98,7 @@ eval(genexpr_attriblistbuilder(:line, LineAttributes, reqfieldcnt=0)) #"line" co
 
 #-------------------------------------------------------------------------------
 type GlyphAttributes <: AttributeList #Don't use "Symbol" - name used by Julia
-	_type
+	shape
 	size
 	color
 	pattern
@@ -154,7 +167,7 @@ end
 
 #==Other constructors/accessors
 ===============================================================================#
-function new(; fixedcanvas::Bool=true, template=nothing)
+function new(; fixedcanvas::Bool=true, template=nothing, emptyplot::Bool=true)
 	const defaultcanvasratio = 1.6 #Roughly golden ratio
 	canvasarg = fixedcanvas? []: "-free"
 		#-free: Stretch canvas to client area
@@ -181,6 +194,13 @@ function new(; fixedcanvas::Bool=true, template=nothing)
 	if nothing == template
 		set(plot, plot.canvas)
 		arrange(plot, (1, 1)) #Fit plot to new canvas size
+	end
+
+	if emptyplot
+		clearall(plot)
+		if nothing == template
+			kill(graph(plot, 0))
+		end
 	end
 
 	return plot
