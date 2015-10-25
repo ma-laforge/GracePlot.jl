@@ -32,6 +32,12 @@ GracePlot.jl currently provides a relatively "bare-bones" interface (despite off
   - In particular: GracePlot.jl does not support Grace math operations.  Users are expected to leverage Julia for processing data before plotting.
  - On certain runs, Grace will complain that some commands cannot be executed... almost like commands are sent too fast for Grace, or something...  Not sure what this is.  Try re-running.
 
+### SVG Issues
+
+GracePlot.jl will post-process SVG files in an attempt to support the W3C 1999 standard.  The changes enable most new web browsers to display the SVG outputs.  Note, however, that text will not appear correctly on these plots.
+
+The EPS format is therefore suggested if high-quality vector plots are desired.
+
 ### Compatibility
 
 Extensive compatibility testing of GracePlot.jl has not been performed.  The module has been tested using the following environment(s):
