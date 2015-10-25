@@ -23,6 +23,7 @@ stdleg = legend(loc=(.9, 1/3-1/20), loctype=:view, charsize=.75)
 #==Generate plot
 ===============================================================================#
 plot = GracePlot.new()
+@show get(plot, :wview), get(plot, :hview) #Not useful yet
 set(plot, pdefaults)
 #Try a multi-graph plot:
 arrange(plot, (3, 2), offset=0.08, hgap=0.15, vgap=0.3)
