@@ -6,6 +6,8 @@ The GracePlot.jl module is a simple control interface for Grace/xmgrace - provid
 
 ## Samples
 
+<img src="https://github.com/ma-laforge/FileRepo/tree/master/GracePlot/sampleplots/graceplot2x2.png" alt="Sample plot" width="400" height="640"></img>
+
 The [sample](sample/) directory contains a few demonstrations on how to use GracePlot.jl.
 
 The [template](sample/template/) directory contains a repository of sample Grace template (parameter) files.
