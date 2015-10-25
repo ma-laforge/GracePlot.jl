@@ -40,6 +40,8 @@ end
 function setattrib(p::Plot, cmd::AbstractString, value::GraceConstLitteral)
 	sendcmd(p, "$cmd $(value.s)") #Send associated string, unquoted
 end
+setattrib(p::Plot, cmd::AbstractString, value::Symbol) =
+	setattrib(p, cmd, graceconstmap[value])
 
 #Set graph attributes for a given element:
 #-------------------------------------------------------------------------------

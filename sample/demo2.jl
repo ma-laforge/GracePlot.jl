@@ -15,7 +15,7 @@ y3 = x.^3
 ===============================================================================#
 defltline = line(width=2.5, color=1)
 defltframeline = line(width=2.5)
-loglin = axes(xscale = gconst[:log], yscale = gconst[:lin])
+loglin = axes(xscale = :log, yscale = :lin)
 
 
 #==Generate plot
@@ -46,7 +46,7 @@ g = graph(plot, (1, 1)) #Play around with another graph
 	#Test message logging functionality:
 	plot.log = true
 	set(g, axes(xmin = 0.1, xmax = 1000, ymin = 1000, ymax = 5000))
-	set(g, loglin, axes(inverty = gconst[:on]))
+	set(g, loglin, axes(inverty = :on))
 	plot.log = false
 
 #Finalize:

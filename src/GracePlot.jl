@@ -7,26 +7,13 @@ using FileIO2
 
 const rootpath = realpath(joinpath(dirname(realpath(@__FILE__)),"../."))
 
+include("graceconst.jl")
 include("codegen.jl")
 include("units.jl")
 include("base.jl")
 include("plotmanip.jl")
 include("files.jl")
 
-#==Constants
-===============================================================================#
-
-#Provide some constant litterals for the user.
-#(Use dict to avoid polluting namespace too much)
-const gconst = Dict{Symbol, GraceConstLitteral}(
-	#Booleans:
-	:on  => GraceConstLitteral("ON"),
-	:off => GraceConstLitteral("OFF"),
-	#Axis scales:
-	:lin        => GraceConstLitteral("NORMAL"),
-	:log        => GraceConstLitteral("LOGARITHMIC"),
-	:reciprocal => GraceConstLitteral("RECIPROCAL"),
-)
 
 #==Exported symbols
 ===============================================================================#
@@ -49,7 +36,6 @@ export axes #Creates AxesAttributes to modify axis
 export line #Creates LineAttributes to modify line
 export glyph #Creates GlyphAttributes to modify glyph
 export redraw #Whole plot
-export gconst #Dict proivding constant litterals to the user
 
 #==
 Other interface tools (symbols not exported to avoid collisions):

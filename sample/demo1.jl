@@ -14,7 +14,7 @@ y3 = x.^3
 ===============================================================================#
 defltline = line(width=2.5, color=1)
 defltframeline = line(width=2.5)
-loglin = axes(xscale = gconst[:log], yscale = gconst[:lin])
+loglin = axes(xscale = :log, yscale = :lin)
 
 
 #==Generate plot

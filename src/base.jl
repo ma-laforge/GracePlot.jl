@@ -10,13 +10,6 @@ typealias DataVec{T<:Real} Vector{T}
 #Graph coordinate (zero-based):
 typealias GraphCoord Tuple{Int, Int}
 
-#A constant litteral in grace...
-#-------------------------------------------------------------------------------
-type GraceConstLitteral
-	#Basically just a string, but will not be surrounded with quotes when sent...
-	s::AbstractString
-end
-
 #-------------------------------------------------------------------------------
 type Dataset
 	x::DataVec
@@ -135,8 +128,8 @@ end
 #-------------------------------------------------------------------------------
 type AxesAttributes <: AttributeList
 	xmin; xmax; ymin; ymax
-	xscale; yscale #gconst[:lin/:log/:reciprocal]
-	invertx; inverty #gconst[:on/:off]
+	xscale; yscale #:lin/:log/:reciprocal
+	invertx; inverty #:on/:off
 end
 eval(genexpr_attriblistbuilder(:axes, AxesAttributes, reqfieldcnt=0)) #"axes" constructor
 
