@@ -63,9 +63,13 @@ type DefaultAttributes <: AttributeList
 	linestyle
 	color
 	pattern
-	font
-	charsize
-	symbolsize
+	font #==
+		Times-Roman, Times-Italic, Times-Bold, Times-BoldItalic
+		Helvetica, Helvetica-Oblique, Helvetica-Bold, Helvetica-BoldOblique
+		Courier, Courier-Oblique, Courier-Bold, Courier-BoldOblique
+		Symbol, ZapfDingbats ==#
+	charsize   #Multiplied by 100, for some reason; Affects axis labels
+	symbolsize #Multiplied by 100, for some reason
 	sformat
 end
 eval(genexpr_attriblistbuilder(:defaults, DefaultAttributes)) #"defaults" constructor
@@ -108,7 +112,7 @@ type GlyphAttributes <: AttributeList #Don't use "Symbol" - name used by Julia
 	linestyle
 	char #ASCII value: Use a letter as a glyph?
 	charfont
-	skipcount
+	skip
 end
 eval(genexpr_attriblistbuilder(:glyph, GlyphAttributes, reqfieldcnt=0)) #"glyph" constructor
 
@@ -126,9 +130,18 @@ end
 
 #-------------------------------------------------------------------------------
 type LegendAttributes <: AttributeList
+	loctype #:view/world
+	loc #(x, y)
+
 	font
-	charsize
+	charsize #Multiplied by 100, for some reason
 	color
+	length
+	invert
+
+	#Between items:
+	hgap
+	vgap
 
 	boxcolor
 	boxpattern
@@ -137,6 +150,7 @@ type LegendAttributes <: AttributeList
 	boxfillcolor
 	boxfillpattern
 end
+eval(genexpr_attriblistbuilder(:legend, LegendAttributes)) #"legend" constructor
 
 #-------------------------------------------------------------------------------
 type AxesAttributes <: AttributeList

@@ -18,7 +18,7 @@ thinline = line(width=0.5)
 thickline = line(style=:ldash, width=8, color=1)
 thickframeline = line(width=2.5)
 loglin = axes(xscale = :log, yscale = :lin)
-
+stdleg = legend(loc=(.9, 1/3-1/20), loctype=:view, charsize=.75)
 
 #==Generate plot
 ===============================================================================#
@@ -26,16 +26,18 @@ plot = GracePlot.new()
 set(plot, pdefaults)
 #Try a multi-graph plot:
 arrange(plot, (3, 2), offset=0.08, hgap=0.15, vgap=0.3)
-g = graph(plot, (1, 2)) #Get a reference to graph (1,2)
+g = graph(plot, (2, 0)) #Get a reference to graph (1,2)
 	txt = text("Parabola (\\f{Times-Italic}y=x\\f{}\\S2\\N)", size=2)
-	set(g, xlabel = text("x-axis", color=2), ylabel = "y-axis")
+	set(g, stdleg, xlabel = text("x-axis", color=2), ylabel = "y-axis")
 	set(g, unsupported = "no dice")
 	set(g, subtitle = txt)
 	set(g, frameline = thickframeline)
 	#Add datasets:
-	ds = add(g, x, y2, glyph(shape=3, color=5, char=4), thinline)
-		set(ds, glyph(color=5, skipcount=10))
+	ds = add(g, x, y2, id="y^2")
+		set(ds, glyph(shape=:diamond, color=5), glyph(skip=10))
 		set(ds, line(color=3))
+	ds = add(g, x, 2.*y2, id="2y^2")
+		set(ds, glyph(shape=:char, char=Int('!'), size=2, skip=10))
 	autofit(g)
 g = graph(plot, (0, 1))
 	set(g, subtitle = "Cubic Function (\\f{Times-Italic}y=x\\f{}\\S3\\N)")

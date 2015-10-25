@@ -38,7 +38,13 @@ FileIO2.save(p::Plot, path::AbstractString) = save(p, File{ParamFmt}(path))
 
 #Save to PNG (avoid use of "export" keyword):
 #-------------------------------------------------------------------------------
-FileIO2.save(p::Plot, file::File{PNGFmt}) = exportplot(p, "PNG", file.path)
+function FileIO2.save(p::Plot, file::File{PNGFmt}; dpi=200)
+	w = round(Int, val(TPoint(p.canvas.width)));
+	h = round(Int, val(TPoint(p.canvas.height)));
+	sendcmd(p, "DEVICE \"PNG\" DPI $dpi") #Must set before PAGE SIZE
+	sendcmd(p, "DEVICE \"PNG\" PAGE SIZE $w, $h")
+	exportplot(p, "PNG", file.path)
+end
 
 #Save to EPS (avoid use of "export" keyword):
 #-------------------------------------------------------------------------------

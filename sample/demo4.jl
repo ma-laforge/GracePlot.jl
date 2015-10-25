@@ -21,7 +21,6 @@ template = GracePlot.template("plot2x2thick_mono")
 #==Generate plot
 ===============================================================================#
 plot = GracePlot.new(fixedcanvas=true, template=template)
-clearall(plot)
 #Add 4 subplots:
 for gidx in 0:3
 	g = add(plot, subtitle = titles[gidx+1])

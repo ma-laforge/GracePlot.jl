@@ -35,5 +35,5 @@ redraw(plot)
 save(plot, "sinewaveplot.agr")
 save(plot, File{EPSFmt}("sinewaveplot.eps"))
 save(plot, File{SVGFmt}("sinewaveplot.svg"))
-save(plot, File{PNGFmt}("sinewaveplot.png"))
+save(plot, File{PNGFmt}("sinewaveplot.png"), dpi=300)
 #Last line

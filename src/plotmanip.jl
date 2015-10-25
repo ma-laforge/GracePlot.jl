@@ -40,6 +40,10 @@ end
 function setattrib(p::Plot, cmd::AbstractString, value::GraceConstLitteral)
 	sendcmd(p, "$cmd $(value.s)") #Send associated string, unquoted
 end
+function setattrib(p::Plot, cmd::AbstractString, value::Tuple{Number, Number})
+	v1 = value[1]; v2 = value[2]
+	sendcmd(p, "$cmd $v1, $v2") #Send out tuple
+end
 setattrib(p::Plot, cmd::AbstractString, value::Symbol) =
 	setattrib(p, cmd, graceconstmap[value])
 
@@ -68,12 +72,20 @@ function setattrib(g::GraphRef, fmap::AttributeCmdMap, prefix::AbstractString, d
 	setactive(g)
 	return setattrib(g.plot, fmap, prefix, data)
 end
+function setattrib(g::GraphRef, prefix::AbstractString, value::AbstractString)
+	setactive(g)
+	return setattrib(g.plot, prefix, value)
+end
 
 #Set dataset attribute:
 #-------------------------------------------------------------------------------
 function setattrib(ds::DatasetRef, fmap::AttributeCmdMap, data::Any)
 	dsid = ds.id
 	setattrib(ds.graph, fmap, "S$dsid ", data)
+end
+function setattrib(ds::DatasetRef, cmd::AbstractString, value::AbstractString)
+	dsid = ds.id
+	setattrib(ds.graph, "S$dsid $cmd", value)
 end
 
 #Core algorithm for "set" interface:
@@ -125,7 +137,11 @@ end
 
 #-------------------------------------------------------------------------------
 updateall(p::Plot) = sendcmd(p, "UPDATEALL")
-redraw(p::Plot) = sendcmd(p, "REDRAW")
+function redraw(p::Plot; update=true)
+	result = sendcmd(p, "REDRAW")
+	if update; updateall(p); end
+	return result
+end
 
 #-------------------------------------------------------------------------------
 function clearall(p::Plot; update::Bool=true, killdata::Bool=true)
@@ -294,6 +310,7 @@ function add(p::Plot, args...; update=true, kwargs...)
 	setenable(g, true)
 #	setactive(g)
 	if update; updateall(p); end
+	set(g, args...; kwargs...)
 
 	return g
 end
@@ -370,6 +387,25 @@ const axes_attribcmdmap = AttributeCmdMap(
 )
 setaxes(g::GraphRef, a::AxesAttributes) = setattrib(g, axes_attribcmdmap, "", a)
 
+const legend_attribcmdmap = AttributeCmdMap(
+	:loctype   => "LOCTYPE",
+	:loc       => "",
+	:font      => "FONT",
+	:charsize  => "CHAR SIZE",
+	:color     => "COLOR",
+	:length    => "LENGTH",
+	:invert    => "INVERT",
+	:hgap      => "HGAP",
+	:vgap      => "VGAP",
+	:boxcolor       => "BOX COLOR",
+	:boxpattern     => "BOX PATTERN",
+	:boxlinewidth   => "BOX LINEWIDTH",
+	:boxlinestyle   => "BOX LINESTYLE",
+	:boxfillcolor   => "BOX FILL COLOR",
+	:boxfillpattern => "BOX FILL PATTERN",
+)
+setlegend(g::GraphRef, a::LegendAttributes) = setattrib(g, legend_attribcmdmap, "LEGEND ", a)
+
 
 #==Dataset-level functionality
 ===============================================================================#
@@ -422,10 +458,11 @@ const glyph_attribcmdmap = AttributeCmdMap(
 	:linestyle   => "SYMBOL LINESTYLE",
 	:char        => "SYMBOL CHAR",
 	:charfont    => "SYMBOL CHAR FONT",
-	:skipcount   => "SYMBOL SKIP",
+	:skip        => "SYMBOL SKIP",
 )
 setglyph(ds::DatasetRef, a::GlyphAttributes) = setattrib(ds, glyph_attribcmdmap, a)
 
+setdatasetid(ds::DatasetRef, id::AbstractString) = setattrib(ds, "LEGEND", id)
 
 #==Define cleaner "set" interface (minimize # of "export"-ed functions)
 ===============================================================================#
@@ -448,7 +485,8 @@ set(p::Plot, args...; kwargs...) = set(p, setplot_listfnmap, setplot_fnmap, args
 
 #-------------------------------------------------------------------------------
 const setgraph_listfnmap = AttributeListFunctionMap(
-	AxesAttributes => setaxes,
+	AxesAttributes   => setaxes,
+	LegendAttributes => setlegend,
 )
 const setgraph_fnmap = AttributeFunctionMap(
 	:enable    => setenable,
@@ -462,11 +500,14 @@ const setgraph_fnmap = AttributeFunctionMap(
 set(g::GraphRef, args...; kwargs...) = set(g, setgraph_listfnmap, setgraph_fnmap, args...; kwargs...)
 
 #-------------------------------------------------------------------------------
-const setline_listfnmap = AttributeListFunctionMap(
+const setds_listfnmap = AttributeListFunctionMap(
 	LineAttributes  => setline,
 	GlyphAttributes => setglyph,
 )
-set(ds::DatasetRef, args...; kwargs...) = set(ds, setline_listfnmap, empty_fnmap, args...; kwargs...)
+const setds_fnmap = AttributeFunctionMap(
+	:id => setdatasetid,
+)
+set(ds::DatasetRef, args...; kwargs...) = set(ds, setds_listfnmap, setds_fnmap, args...; kwargs...)
 
 #==Define cleaner "get" interface (minimize # of "export"-ed functions)
 ===============================================================================#
