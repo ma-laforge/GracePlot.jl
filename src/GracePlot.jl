@@ -41,6 +41,7 @@ export axes #Creates AxesAttributes to modify axis
 export line #Creates LineAttributes to modify line
 export glyph #Creates GlyphAttributes to modify glyph
 export legend #Creates LegendAttributes to edit legend
+export addannotation
 
 #==
 Other interface tools (symbols not exported to avoid collisions):

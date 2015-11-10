@@ -83,10 +83,16 @@ eval(genexpr_attriblistbuilder(:limits, CartesianLimAttributes)) #"limits" const
 
 #-------------------------------------------------------------------------------
 type TextAttributes <: AttributeList
+	#Common attributes
 	value::AbstractString
 	font
 	size
 	color
+
+	#Non-common (for annotations)
+	loctype #:view/world
+	loc #(x, y)
+	just
 end
 eval(genexpr_attriblistbuilder(:text, TextAttributes, reqfieldcnt=1)) #"text" constructor
 

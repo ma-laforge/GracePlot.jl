@@ -56,6 +56,9 @@ const graceconstmap = Dict{Symbol, GraceConstLitteral}(
 	#Location type (relative to what coordinates):
 	:world     => GraceConstLitteral("world"),
 	:view      => GraceConstLitteral("view"),
+
+	#Text justification
+	:centercenter => GraceConstLitteral("14"),
 )
 
 #Last line

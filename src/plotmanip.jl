@@ -34,6 +34,9 @@ end
 function setattrib(p::Plot, cmd::AbstractString, value::Any) #Catchall
 	sendcmd(p, "$cmd $value")
 end
+function setattrib(p::Plot, cmd::AbstractString, value::Void)
+	#Nothing to do
+end
 function setattrib(p::Plot, cmd::AbstractString, value::AbstractString)
 	sendcmd(p, "$cmd \"$value\"") #Add quotes around string
 end
@@ -47,7 +50,7 @@ end
 setattrib(p::Plot, cmd::AbstractString, value::Symbol) =
 	setattrib(p, cmd, graceconstmap[value])
 
-#Set graph attributes for a given element:
+#Set plot attributes for a given element:
 #-------------------------------------------------------------------------------
 function setattrib(p::Plot, fmap::AttributeCmdMap, prefix::AbstractString, data::Any)
 	for attrib in fieldnames(data)
@@ -131,6 +134,12 @@ function getattrib(obj::Any, fnmap::AttributeFunctionMap, attrib::Symbol)
 	return getfn(obj)
 end
 
+#Core algorithm for "addannotation" interface:
+#(Just use set in the background... it does what you would want...)
+#-------------------------------------------------------------------------------
+function addannotation(obj::Any, listfnmap::AttributeListFunctionMap, fnmap::AttributeFunctionMap, args...; kwargs...)
+	return set(obj::Any, listfnmap, fnmap, args...; kwargs...)
+end
 
 #==Plot-level functionality
 ===============================================================================#
@@ -219,6 +228,39 @@ function arrange(p::Plot, gdim::GraphCoord; offset=0.15, hgap=0.15, vgap=0.15)
 	end
 end
 
+#Add new graph to a plot
+#NOTE: update = true sends UPDATEALL command to avoid having the GUI out of
+#      sync with the plot itself. User expected to call updateall manually when
+#      using update=false
+#-------------------------------------------------------------------------------
+function add(p::Plot, args...; update=true, kwargs...)
+	gidx = length(p.graphs)
+	push!(p.graphs, Graph())
+	g = graph(p, gidx)
+	setenable(g, true)
+#	setactive(g)
+	if update; updateall(p); end
+	set(g, args...; kwargs...)
+
+	return g
+end
+
+#Add plot annotation:
+#-------------------------------------------------------------------------------
+function addtext(p::Plot, a::TextAttributes)
+	prefix = "    STRING"
+	sendcmd(p, "WITH STRING")
+	sendcmd(p, "$prefix ON")
+	setattrib(p::Plot, "$prefix LOCTYPE", a.loctype)
+	setattrib(p::Plot, "$prefix", a.loc)
+	setattrib(p::Plot, "$prefix FONT", a.font)
+	setattrib(p::Plot, "$prefix CHAR SIZE", a.size)
+	setattrib(p::Plot, "$prefix COLOR", a.color)
+	setattrib(p::Plot, "$prefix JUST", a.just)
+	setattrib(p::Plot, "$prefix DEF", a.value) #This has to go last, for some reason
+	#...so cannot use attribcmdmap method....
+end
+
 #-------------------------------------------------------------------------------
 const defaults_attribcmdmap = AttributeCmdMap(
 	:linewidth  => "LINEWIDTH",
@@ -296,23 +338,6 @@ function clearall(g::GraphRef; update::Bool=true, killdata::Bool=true)
 	if update
 		updateall(p)
 	end
-end
-
-#Add new graph to a plot
-#NOTE: update = true sends UPDATEALL command to avoid having the GUI out of
-#      sync with the plot itself. User expected to call updateall manually when
-#      using update=false
-#-------------------------------------------------------------------------------
-function add(p::Plot, args...; update=true, kwargs...)
-	gidx = length(p.graphs)
-	push!(p.graphs, Graph())
-	g = graph(p, gidx)
-	setenable(g, true)
-#	setactive(g)
-	if update; updateall(p); end
-	set(g, args...; kwargs...)
-
-	return g
 end
 
 #NOTE: AUTOSCALE X/Y does not seem to work...
@@ -518,5 +543,15 @@ const getplot_fnmap = AttributeFunctionMap(
 	:hview    => gethview,
 )
 Base.get(p::Plot, attrib::Symbol) = getattrib(p, getplot_fnmap, attrib)
+
+
+#==Define cleaner "addannotation" interface (minimize # of "export"-ed functions)
+===============================================================================#
+
+#-------------------------------------------------------------------------------
+const addannot_listfnmap = AttributeListFunctionMap(
+	TextAttributes  => addtext,
+)
+addannotation(p::Plot, args...; kwargs...) = addannotation(p, addannot_listfnmap, empty_fnmap, args...; kwargs...)
 
 #Last line
