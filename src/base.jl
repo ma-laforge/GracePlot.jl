@@ -139,6 +139,8 @@ type LegendAttributes <: AttributeList
 	loctype #:view/world
 	loc #(x, y)
 
+	display #true/false
+
 	font
 	charsize #Multiplied by 100, for some reason
 	color

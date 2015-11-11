@@ -415,6 +415,7 @@ setaxes(g::GraphRef, a::AxesAttributes) = setattrib(g, axes_attribcmdmap, "", a)
 const legend_attribcmdmap = AttributeCmdMap(
 	:loctype   => "LOCTYPE",
 	:loc       => "",
+	:display   => "",
 	:font      => "FONT",
 	:charsize  => "CHAR SIZE",
 	:color     => "COLOR",
