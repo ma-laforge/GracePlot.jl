@@ -11,10 +11,6 @@ abstract AttributeList
 #==Helper functions
 ===============================================================================#
 
-macro accessfield(_type,_field)
-	return esc(:($_type.$_field))
-end
-
 
 #==Object builders
 ===============================================================================#

@@ -23,10 +23,10 @@ typealias AttributeCmdMap Dict{Symbol, AbstractString}
 #Copy in only attributes that are not "nothing" (thus "new"):
 function copynew!{T<:AttributeList}(dest::T, newlist::T)
 	for attrib in fieldnames(newlist)
-		v = @accessfield(newlist,$attrib)
+		v = getfield(newlist, attrib)
 
 		if v != nothing
-			@accessfield(dest,$attrib) = v
+			setfield!(dest, attrib, v)
 		end
 	end
 end
@@ -54,7 +54,7 @@ setattrib(p::Plot, cmd::AbstractString, value::Symbol) =
 #-------------------------------------------------------------------------------
 function setattrib(p::Plot, fmap::AttributeCmdMap, prefix::AbstractString, data::Any)
 	for attrib in fieldnames(data)
-		v = @accessfield(data,$attrib)
+		v = getfield(data, attrib)
 
 		if v != nothing
 			subcmd = get(fmap, attrib, nothing)
