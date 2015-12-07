@@ -12,7 +12,7 @@ template(name::AbstractString) =
 	File{ParamFmt}(joinpath(GracePlot.rootpath, "sample/template/$name.par"))
 
 #OR: Could have shorthand:
-#FileIO2.File(::FileIO2.Format{:graceparam}, path::AbstractString) = File{ParamFmt}(path)
+#FileIO2.File(::FileIO2.Shorthand{:graceparam}, path::AbstractString) = File{ParamFmt}(path)
 
 
 #==Helper functions
