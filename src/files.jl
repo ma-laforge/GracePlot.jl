@@ -11,6 +11,9 @@ abstract ParamFmt <: FileIO2.DataFormat
 template(name::AbstractString) =
 	File{ParamFmt}(joinpath(GracePlot.rootpath, "sample/template/$name.par"))
 
+#OR: Could have shorthand:
+#FileIO2.File(::FileIO2.Format{:graceparam}, path::AbstractString) = File{ParamFmt}(path)
+
 
 #==Helper functions
 ===============================================================================#
@@ -28,17 +31,17 @@ end
 
 #Save a Grace plot:
 #-------------------------------------------------------------------------------
-function FileIO2.save(p::Plot, file::File{ParamFmt})
+function Base.write(file::File{ParamFmt}, p::Plot)
 	path = file.path
 	@assert !contains(path, "\"") "File path contains '\"'."
 	sendcmd(p, "SAVEALL \"$path\"")
 end
-FileIO2.save(p::Plot, path::AbstractString) = save(p, File{ParamFmt}(path))
+Base.write(path::AbstractString, p::Plot) = Base.write(File{ParamFmt}(path), p)
 
 
 #Save to PNG (avoid use of "export" keyword):
 #-------------------------------------------------------------------------------
-function FileIO2.save(p::Plot, file::File{PNGFmt}; dpi=200)
+function Base.write(file::File{PNGFmt}, p::Plot; dpi=200)
 	w = round(Int, val(TPoint(p.canvas.width)));
 	h = round(Int, val(TPoint(p.canvas.height)));
 	sendcmd(p, "DEVICE \"PNG\" DPI $dpi") #Must set before PAGE SIZE
@@ -48,7 +51,7 @@ end
 
 #Save to EPS (avoid use of "export" keyword):
 #-------------------------------------------------------------------------------
-function FileIO2.save(p::Plot, file::File{EPSFmt})
+function Base.write(file::File{EPSFmt}, p::Plot)
 	sendcmd(p, "DEVICE \"EPS\" OP \"bbox:page\"")
 	exportplot(p, "EPS", file.path)
 end
@@ -57,7 +60,7 @@ end
 #TODO: Make more robust... use more try/catch.
 #NOTE: Replace xml (svg) statements using Julia v3 compatibility.
 #-------------------------------------------------------------------------------
-function FileIO2.save(p::Plot, file::File{SVGFmt})
+function Base.write(file::File{SVGFmt}, p::Plot)
 	tmpfilepath = "./.tempgraceplotexport.svg"
 	#Export to svg, using the native Grace format:
 	exportplot(p, "SVG", tmpfilepath)

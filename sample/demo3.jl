@@ -32,8 +32,8 @@ g = add(plot, title = "Grace SVG Plot")
 redraw(plot)
 
 #Save plot in multiple formats:
-save(plot, "sinewaveplot.agr")
-save(plot, File{EPSFmt}("sinewaveplot.eps"))
-save(plot, File{SVGFmt}("sinewaveplot.svg"))
-save(plot, File{PNGFmt}("sinewaveplot.png"), dpi=300)
+write("sinewaveplot.agr", plot)
+write(File(:eps, "sinewaveplot.eps"), plot)
+write(File(:svg, "sinewaveplot.svg"), plot)
+write(File(:png, "sinewaveplot.png"), plot, dpi=300)
 #Last line
