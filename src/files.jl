@@ -33,7 +33,7 @@ end
 #-------------------------------------------------------------------------------
 function Base.write(file::File{ParamFmt}, p::Plot)
 	path = file.path
-	@assert !contains(path, "\"") "File path contains '\"'."
+	_ensure(!contains(path, "\""), ArgumentError("File path contains '\"'."))
 	sendcmd(p, "SAVEALL \"$path\"")
 end
 Base.write(path::AbstractString, p::Plot) = Base.write(File{ParamFmt}(path), p)

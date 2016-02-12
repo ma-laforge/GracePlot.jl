@@ -304,12 +304,14 @@ end
 #(Plot argument is otherwise redundant)
 #-------------------------------------------------------------------------------
 function setactive(p::Plot, g::GraphRef)
-	@assert p==g.plot "setactive: GraphRef does not match Plot to control."
+	_ensure(p==g.plot,
+		ArgumentError("setactive: GraphRef does not match Plot to control."))
 	setactive(g)
 end
 
 function setfocus(p::Plot, g::GraphRef)
-	@assert p==g.plot "setfocus: GraphRef does not match Plot to control."
+	_ensure(p==g.plot,
+		ArgumentError("setfocus: GraphRef does not match Plot to control."))
 	setfocus(g)
 end
 #-------------------------------------------------------------------------------
@@ -445,7 +447,8 @@ end
 
 #-------------------------------------------------------------------------------
 function add(g::GraphRef, x::DataVec, y::DataVec, args...; kwargs...)
-	@assert length(x) == length(y) "GracePlot.add(): x & y vlengths must match."
+	_ensure(length(x) == length(y),
+		ArgumentError("GracePlot.add(): x & y vlengths must match."))
 	p = g.plot
 	gidx = graphindex(g)
 	gdata = graphdata(g)

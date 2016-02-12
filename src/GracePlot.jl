@@ -7,6 +7,17 @@ using FileIO2
 
 const rootpath = realpath(joinpath(dirname(realpath(@__FILE__)),"../."))
 
+
+#==Ensure interface (similar to assert)
+===============================================================================#
+#=Similar to assert.  However, unlike assert, "ensure" is not meant for
+debugging.  Thus, ensure is never meant to be compiled out.
+=#
+function _ensure(cond::Bool, err)
+	if !cond; throw(err); end
+end
+
+
 include("graceconst.jl")
 include("codegen.jl")
 include("units.jl")
