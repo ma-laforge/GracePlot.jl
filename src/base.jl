@@ -189,7 +189,7 @@ end
 
 #==Other constructors/accessors
 ===============================================================================#
-function new(; fixedcanvas::Bool=true, template=nothing, emptyplot::Bool=true)
+function new(args...; fixedcanvas::Bool=true, template=nothing, emptyplot::Bool=true, kwargs...)
 	const defaultcanvasratio = 1.6 #Roughly golden ratio
 	canvasarg = fixedcanvas? []: "-free"
 		#-free: Stretch canvas to client area
@@ -225,6 +225,7 @@ function new(; fixedcanvas::Bool=true, template=nothing, emptyplot::Bool=true)
 		end
 	end
 
+	set(plot, args...; kwargs...)
 	return plot
 end
 
