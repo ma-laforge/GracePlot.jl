@@ -1,5 +1,6 @@
 #GracePlot file tools
 #-------------------------------------------------------------------------------
+#TODO: Rename io.jl
 
 #==Register new DataFormat/File types
 ===============================================================================#
@@ -17,11 +18,52 @@ template(name::AbstractString) =
 
 #==Helper functions
 ===============================================================================#
+#Opens a file for read, after it is done being written:
+#(Writing files with grace is a non-blocking operation.)
+#timeout in seconds
+function openreadafterexport(p::Plot, filepath::AbstractString; timeout=15)
+	const poll_interval = .1 #sec
+	timeout = timeout*1_000_000_000
+	flushpipe(p) #Make sure last write operation is registered with Grace.
+	tstart = time_ns()
+	local io
+
+	while true
+		try
+#			filepath = "nope"
+			io = open(filepath, "r")
+			break
+		catch e
+			sleep(poll_interval)
+			if time_ns()-tstart > timeout
+				rethrow(e)
+			end
+		end
+	end
+
+	szlast = 0
+	while true
+		sleep(poll_interval)
+		sz = filesize(io)
+		if sz == 0
+			if time_ns()-tstart > timeout
+				close(io)
+				throw("$filepath access timed out.")
+			end
+		elseif sz == szlast
+			break
+		end
+		szlast = sz
+	end
+#	@show filesize(io)/1e6
+	return io
+end
 #-------------------------------------------------------------------------------
 function exportplot(p::Plot, filefmt::AbstractString, filepath::AbstractString)
 	sendcmd(p, "HARDCOPY DEVICE \"$filefmt\"")
 	sendcmd(p, "PRINT TO \"$filepath\"")
 	sendcmd(p, "PRINT")
+	flushpipe(p)
 	#Sadly, Grace does not wait unil file is saved to return from "PRINT"
 end
 
@@ -35,6 +77,7 @@ function Base.write(file::File{ParamFmt}, p::Plot)
 	path = file.path
 	_ensure(!contains(path, "\""), ArgumentError("File path contains '\"'."))
 	sendcmd(p, "SAVEALL \"$path\"")
+	flushpipe(p)
 end
 Base.write(path::AbstractString, p::Plot) = Base.write(File{ParamFmt}(path), p)
 
@@ -61,34 +104,12 @@ end
 #NOTE: Replace xml (svg) statements using Julia v3 compatibility.
 #-------------------------------------------------------------------------------
 function Base.write(file::File{SVGFmt}, p::Plot)
-	tmpfilepath = "./.tempgraceplotexport.svg"
+	tmpfilepath = "$(tempname())_export.svg"
 	#Export to svg, using the native Grace format:
 	exportplot(p, "SVG", tmpfilepath)
 	#NOTE: Is this the 2001 format?  Most programs do not appear to read it.
 
-	local src
-	retries = 3
-	twait = 1 #sec
-	wait_expfact = 2#Exponential factor to increase wait time
-	success = false
-
-
-	while !success
-		try
-#			tmpfilepath = "nope"
-			src = open(tmpfilepath, "r")
-			success = true
-		catch e
-			retries -= 1
-			sleep(twait)
-#			@show twait
-			twait *= wait_expfact
-			if retries < 0
-				rethrow(e)
-			end
-		end
-	end
-	
+	src = openreadafterexport(p, tmpfilepath)
 	filedat = readall(src)
 	close(src)
 
@@ -107,6 +128,20 @@ function Base.write(file::File{SVGFmt}, p::Plot)
 	close(dest)
 
 	rm(tmpfilepath)
+end
+
+
+#==MIME support
+===============================================================================#
+function Base.writemime(io::IO, ::MIME{symbol("image/png")}, p::Plot; dpi=200)
+	tmpfile = File(:png, "$(tempname())_export.png")
+	Base.write(tmpfile, p, dpi = dpi)
+	flushpipe(p)
+	src = openreadafterexport(p, tmpfile.path)
+	data = readall(src)
+	write(io, data)
+	close(src)
+	rm(tmpfile.path)
 end
 
 #Last line
