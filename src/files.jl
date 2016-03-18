@@ -73,18 +73,18 @@ end
 
 #Save a Grace plot:
 #-------------------------------------------------------------------------------
-function Base.write(file::File{ParamFmt}, p::Plot)
+function _write(file::File{ParamFmt}, p::Plot)
 	path = file.path
 	_ensure(!contains(path, "\""), ArgumentError("File path contains '\"'."))
 	sendcmd(p, "SAVEALL \"$path\"")
 	flushpipe(p)
 end
-Base.write(path::AbstractString, p::Plot) = Base.write(File{ParamFmt}(path), p)
+_write(path::AbstractString, p::Plot) = _write(File{ParamFmt}(path), p)
 
 
 #Save to PNG (avoid use of "export" keyword):
 #-------------------------------------------------------------------------------
-function Base.write(file::File{PNGFmt}, p::Plot; dpi=200)
+function _write(file::File{PNGFmt}, p::Plot; dpi=200)
 	w = round(Int, val(TPoint(p.canvas.width)));
 	h = round(Int, val(TPoint(p.canvas.height)));
 	sendcmd(p, "DEVICE \"PNG\" DPI $dpi") #Must set before PAGE SIZE
@@ -94,7 +94,7 @@ end
 
 #Save to EPS (avoid use of "export" keyword):
 #-------------------------------------------------------------------------------
-function Base.write(file::File{EPSFmt}, p::Plot)
+function _write(file::File{EPSFmt}, p::Plot)
 	sendcmd(p, "DEVICE \"EPS\" OP \"bbox:page\"")
 	exportplot(p, "EPS", file.path)
 end
@@ -103,7 +103,7 @@ end
 #TODO: Make more robust... use more try/catch.
 #NOTE: Replace xml (svg) statements using Julia v3 compatibility.
 #-------------------------------------------------------------------------------
-function Base.write(file::File{SVGFmt}, p::Plot)
+function _write(file::File{SVGFmt}, p::Plot)
 	tmpfilepath = "$(tempname())_export.svg"
 	#Export to svg, using the native Grace format:
 	exportplot(p, "SVG", tmpfilepath)
@@ -135,7 +135,7 @@ end
 ===============================================================================#
 function Base.writemime(io::IO, ::MIME{symbol("image/png")}, p::Plot; dpi=200)
 	tmpfile = File(:png, "$(tempname())_export.png")
-	Base.write(tmpfile, p, dpi = dpi)
+	_write(tmpfile, p, dpi = dpi)
 	flushpipe(p)
 	src = openreadafterexport(p, tmpfile.path)
 	data = readall(src)

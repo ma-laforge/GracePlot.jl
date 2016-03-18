@@ -19,7 +19,7 @@ smallplot = GracePlot.template("smallplot_mono")
 
 #==Generate plot
 ===============================================================================#
-plot = GracePlot.new(template=smallplot)
+plot = GracePlot.new(guimode=true, template=smallplot)
 g = add(plot, title = "Grace SVG Plot")
 	set(g, subtitle = "(\\f{Times-Italic}y\\s1\\N=sin(x), y\\s2\\N=cos(x)\\f{})")
 	set(g, xlabel = "Angle (rad)", ylabel = "Amplitude")
@@ -32,8 +32,8 @@ g = add(plot, title = "Grace SVG Plot")
 redraw(plot)
 
 #Save plot in multiple formats:
-write("sinewaveplot.agr", plot)
-write(File(:eps, "sinewaveplot.eps"), plot)
-write(File(:svg, "sinewaveplot.svg"), plot)
-write(File(:png, "sinewaveplot.png"), plot, dpi=300)
+GracePlot._write("sinewaveplot.agr", plot)
+GracePlot._write(File(:eps, "sinewaveplot.eps"), plot)
+GracePlot._write(File(:svg, "sinewaveplot.svg"), plot)
+GracePlot._write(File(:png, "sinewaveplot.png"), plot, dpi=300)
 #Last line
