@@ -147,6 +147,7 @@ end
 #-------------------------------------------------------------------------------
 updateall(p::Plot) = sendcmd(p, "UPDATEALL")
 function redraw(p::Plot; update=true)
+	if !p.guimode; return; end #Causes issues when !guimode
 	result = sendcmd(p, "REDRAW")
 	if update; updateall(p); end
 	return result

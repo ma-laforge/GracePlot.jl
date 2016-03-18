@@ -34,6 +34,7 @@ canvas(width::AbstractLength, height::AbstractLength) = CanvasAttributes(width, 
 type Plot
 	pipe::Base.Pipe
 	process::Base.Process
+	guimode::Bool
 
 	#Width/height stored so user knows what it is
 	#>>Smallest of height/width is considered unity by Grace<<
@@ -189,14 +190,15 @@ end
 
 #==Other constructors/accessors
 ===============================================================================#
-function new(args...; fixedcanvas::Bool=true, template=nothing, emptyplot::Bool=true, kwargs...)
+function new(args...; guimode::Bool=true, fixedcanvas::Bool=true, template=nothing, emptyplot::Bool=true, kwargs...)
 	const defaultcanvasratio = 1.6 #Roughly golden ratio
 	canvasarg = fixedcanvas? []: "-free"
 		#-free: Stretch canvas to client area
 	templatearg = template!=nothing? ["-param" "$template"]: []
+	guiarg = guimode? []: "-hardcopy"
 	#Other switches:
 	#   -dpipe 0: STDIN; -pipe switch seems broken
-	cmd = `xmgrace -dpipe 0 -nosafe -noask $canvasarg $templatearg`
+	cmd = `xmgrace -dpipe 0 -nosafe -noask $guiarg $canvasarg $templatearg`
 	(pipe, process) = open(cmd, "w")
 	activegraph = -1 #None active @ start
 
@@ -205,7 +207,7 @@ function new(args...; fixedcanvas::Bool=true, template=nothing, emptyplot::Bool=
 	h = 20c; w = h*defaultcanvasratio
 	ncols = 2 #Assume 2 graph columns, by default
 
-	plot = Plot(pipe, process, canvas(Meter(w), Meter(h)), ncols,
+	plot = Plot(pipe, process, guimode, canvas(Meter(w), Meter(h)), ncols,
 		Graph[Graph()], activegraph, false
 	)
 	#At this point, plot.canvas is still basically meaningless...
