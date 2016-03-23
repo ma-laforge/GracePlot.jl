@@ -12,16 +12,20 @@ The [template](sample/template/) directory contains a repository of sample Grace
 
 A few [sample plots](https://github.com/ma-laforge/FileRepo/tree/master/GracePlot/sampleplots/) are included in a separate repository.
 
+## Configuration
+
+By default, GracePlot.jl assumes Grace is accessible from the environment path as `xmgrace`.  To specify a different command/path, simply set the `GRACEPLOT_COMMAND` environment variable.
+
+The value of `GRACEPLOT_COMMAND` can therefore be set from `.juliarc.jl` with the following:
+
+	ENV["GRACEPLOT_COMMAND"] = "/home/laforge/bin/xmgrace2"
+
 ## Dependencies
 
 The GracePlot.jl module requires the following software/modules:
 
  - The Julia Language <http://julialang.org/>
- - <sup>1</sup>Grace/xmgrace: 2D Plotting Tool <http://plasma-gate.weizmann.ac.il/Grace/>
-
-NOTE:
-
- - <sup>1</sup>GracePlot.jl expects Grace to be present in the Julia shell environment through the command `xmgrace`.
+ - Grace/xmgrace: 2D Plotting Tool <http://plasma-gate.weizmann.ac.il/Grace/>
 
 ## Known Limitations
 
@@ -42,7 +46,7 @@ The EPS format is therefore suggested if high-quality vector plots are desired.
 
 Extensive compatibility testing of GracePlot.jl has not been performed.  The module has been tested using the following environment(s):
 
- - Linux / Julia-0.4.0 / Grace-5.1.23.
+ - Linux / Julia-0.4.2 / Grace-5.1.23.
 
 ## Disclaimer
 

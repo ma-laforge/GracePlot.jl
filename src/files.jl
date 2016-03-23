@@ -84,13 +84,19 @@ _write(path::AbstractString, p::Plot) = _write(File{ParamFmt}(path), p)
 
 #Save to PNG (avoid use of "export" keyword):
 #-------------------------------------------------------------------------------
-function _write(file::File{PNGFmt}, p::Plot; dpi=200)
+function __write(file::File{PNGFmt}, p::Plot, dpi::Int)
 	w = round(Int, val(TPoint(p.canvas.width)));
 	h = round(Int, val(TPoint(p.canvas.height)));
 	sendcmd(p, "DEVICE \"PNG\" DPI $dpi") #Must set before PAGE SIZE
 	sendcmd(p, "DEVICE \"PNG\" PAGE SIZE $w, $h")
 	exportplot(p, "PNG", file.path)
 end
+__write(file::File{PNGFmt}, p::Plot, ::Void) =
+	__write(file, p, p.dpi)
+
+#Support overwiting of Plot.dpi:
+_write(file::File{PNGFmt}, p::Plot; dpi::Union{Int,Void}=nothing) =
+	__write(file, p, dpi)
 
 #Save to EPS (avoid use of "export" keyword):
 #-------------------------------------------------------------------------------
@@ -133,7 +139,8 @@ end
 
 #==MIME support
 ===============================================================================#
-function Base.writemime(io::IO, ::MIME{symbol("image/png")}, p::Plot; dpi=200)
+function Base.writemime(io::IO, ::MIME{symbol("image/png")}, p::Plot;
+		dpi::Union{Int,Void}=nothing) 
 	tmpfile = File(:png, "$(tempname())_export.png")
 	_write(tmpfile, p, dpi = dpi)
 	flushpipe(p)
