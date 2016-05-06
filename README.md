@@ -1,5 +1,7 @@
 # GracePlot.jl
 
+[Sample Plots](https://github.com/ma-laforge/FileRepo/tree/master/GracePlot/sampleplots/README.md) (might be out of date).<br>
+
 ## Description
 
 The GracePlot.jl module is a simple control interface for Grace/xmgrace - providing more publication-quality plotting facilities to Julia.
