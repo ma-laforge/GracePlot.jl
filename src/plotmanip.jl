@@ -11,7 +11,9 @@ typealias AttributeFunctionMap Dict{Symbol, Function}
 #NOTE: Unlike individual attributes, typed obects do not need to be "set"
 #      using keyword arguments
 #TODO: Find way to restrict Dict to DataTypes inherited from AttributeList
-typealias AttributeListFunctionMap Dict{DataType, Function}
+#typealias AttributeListFunctionMap Dict{DataType, Function}
+#Use ObjectIdDict: Compatibility with precompile.
+typealias AttributeListFunctionMap ObjectIdDict #{DataType, Function}
 
 #Map attribute fields to grace commands:
 typealias AttributeCmdMap Dict{Symbol, AbstractString}

@@ -33,7 +33,7 @@ redraw(plot)
 
 #Save plot in multiple formats:
 GracePlot._write("sinewaveplot.agr", plot)
-GracePlot._write(File(:eps, "sinewaveplot.eps"), plot)
-GracePlot._write(File(:svg, "sinewaveplot.svg"), plot)
-GracePlot._write(File(:png, "sinewaveplot.png"), plot, dpi=300)
+GracePlot.write_eps("sinewaveplot.eps", plot)
+GracePlot.write_svg("sinewaveplot.svg", plot)
+GracePlot.write_png("sinewaveplot.png", plot, dpi=300)
 #Last line

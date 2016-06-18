@@ -1,11 +1,14 @@
 #GracePlot: Publication-quality plots through Grace/xmgrace
 #-------------------------------------------------------------------------------
+#__precompile__()
 
 module GracePlot
 
-using FileIO2
-
 const rootpath = realpath(joinpath(dirname(realpath(@__FILE__)),"../."))
+
+#Convenient accessor for sample GracePlot template (parameter) files:
+template(name::AbstractString) =
+	joinpath(GracePlot.rootpath, "sample", "template", "$name.par")
 
 
 #==Ensure interface (similar to assert)
@@ -23,7 +26,7 @@ include("codegen.jl")
 include("units.jl")
 include("base.jl")
 include("plotmanip.jl")
-include("files.jl")
+include("io.jl")
 
 
 #==Exported symbols
@@ -56,12 +59,11 @@ export addannotation
 
 #==
 Other interface tools (symbols not exported to avoid collisions):
-	Inch, Meter, TPoint... should be provided by external module
+	Inch, Meter, TPoint... TODO: move to external module
 	Plot: Main plot object.
 	new(): Creates a new Plot object.
 	kill(graph): Kill already in Base.
 	template("<GracePlot-provided template name>")
-	File{GracePlot.ParamFmt}("filename.par")
 	Base.get.... get is already part of base, so can't export it...
 ==#
 

@@ -1,19 +1,13 @@
-#GracePlot file tools
+#GracePlot: I/O facilities
 #-------------------------------------------------------------------------------
-#TODO: Rename io.jl
 
-#==Register new DataFormat/File types
+
+#==Constants
 ===============================================================================#
-
-#Parameter file format (Not exported):
-abstract ParamFmt <: FileIO2.DataFormat
-
-#Convenient accessor for sample GracePlot template (parameter) files:
-template(name::AbstractString) =
-	File{ParamFmt}(joinpath(GracePlot.rootpath, "sample/template/$name.par"))
-
-#OR: Could have shorthand:
-#FileIO2.File(::FileIO2.Shorthand{:graceparam}, path::AbstractString) = File{ParamFmt}(path)
+typealias MIMEpng MIME"image/png"
+#typealias MIMEsvg MIME"image/svg+xml"
+#typealias MIMEeps MIME"image/eps"
+#typealias MIMEpdf MIME"application/pdf"
 
 
 #==Helper functions
@@ -68,48 +62,49 @@ function exportplot(p::Plot, filefmt::AbstractString, filepath::AbstractString)
 end
 
 
-#==Load/save/export plots
+#==_write interface
 ===============================================================================#
 
-#Save a Grace plot:
+#Write plot to Grace .agr file:
 #-------------------------------------------------------------------------------
-function _write(file::File{ParamFmt}, p::Plot)
-	path = file.path
+function _write(path::AbstractString, p::Plot)
 	_ensure(!contains(path, "\""), ArgumentError("File path contains '\"'."))
 	sendcmd(p, "SAVEALL \"$path\"")
 	flushpipe(p)
 end
-_write(path::AbstractString, p::Plot) = _write(File{ParamFmt}(path), p)
 
 
-#Save to PNG (avoid use of "export" keyword):
+#==write_FILEFMT interface
+===============================================================================#
+
+#Write to PNG:
 #-------------------------------------------------------------------------------
-function __write(file::File{PNGFmt}, p::Plot, dpi::Int)
+function _write_png(path::AbstractString, p::Plot, dpi::Int)
 	w = round(Int, val(TPoint(p.canvas.width)));
 	h = round(Int, val(TPoint(p.canvas.height)));
 	sendcmd(p, "DEVICE \"PNG\" DPI $dpi") #Must set before PAGE SIZE
 	sendcmd(p, "DEVICE \"PNG\" PAGE SIZE $w, $h")
-	exportplot(p, "PNG", file.path)
+	exportplot(p, "PNG", path)
 end
-__write(file::File{PNGFmt}, p::Plot, ::Void) =
-	__write(file, p, p.dpi)
+_write_png(path::AbstractString, p::Plot, ::Void) =
+	_write_png(path, p, p.dpi) #Use dpi setting in plot
 
-#Support overwiting of Plot.dpi:
-_write(file::File{PNGFmt}, p::Plot; dpi::Union{Int,Void}=nothing) =
-	__write(file, p, dpi)
+#User-level wrapper function:
+write_png(path::AbstractString, p::Plot; dpi::Union{Int,Void}=nothing) =
+	_write_png(path, p, dpi)
 
-#Save to EPS (avoid use of "export" keyword):
+#Write to EPS:
 #-------------------------------------------------------------------------------
-function _write(file::File{EPSFmt}, p::Plot)
+function write_eps(path::AbstractString, p::Plot)
 	sendcmd(p, "DEVICE \"EPS\" OP \"bbox:page\"")
-	exportplot(p, "EPS", file.path)
+	exportplot(p, "EPS", path)
 end
 
-#Export to SVG.  (Fix Grace output according W3C 1999 format):
+#Write to SVG.  (Fix Grace output according W3C 1999 format):
 #TODO: Make more robust... use more try/catch.
 #NOTE: Replace xml (svg) statements using Julia v3 compatibility.
 #-------------------------------------------------------------------------------
-function _write(file::File{SVGFmt}, p::Plot)
+function write_svg(path::AbstractString, p::Plot)
 	tmpfilepath = "$(tempname())_export.svg"
 	#Export to svg, using the native Grace format:
 	exportplot(p, "SVG", tmpfilepath)
@@ -129,7 +124,7 @@ function _write(file::File{SVGFmt}, p::Plot)
 	cap1 = captures[1]; cap2 = captures[2]
 	filedat = replace(filedat, pat, "$cap1 xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" $cap2")
 
-	dest = open(file.path, "w")
+	dest = open(path, "w")
 	write(dest, filedat)
 	close(dest)
 
@@ -139,16 +134,40 @@ end
 
 #==MIME support
 ===============================================================================#
-function Base.writemime(io::IO, ::MIME{symbol("image/png")}, p::Plot;
-		dpi::Union{Int,Void}=nothing) 
-	tmpfile = File(:png, "$(tempname())_export.png")
-	_write(tmpfile, p, dpi = dpi)
+function Base.writemime(io::IO, ::MIMEpng, p::Plot; dpi::Union{Int,Void}=nothing)
+	tmpfile = "$(tempname())_export.png"
+	_write_png(tmpfile, p, dpi)
 	flushpipe(p)
-	src = openreadafterexport(p, tmpfile.path)
+	src = openreadafterexport(p, tmpfile)
 	data = readall(src)
 	write(io, data)
 	close(src)
-	rm(tmpfile.path)
+	rm(tmpfile)
 end
+
+
+#=
+#==FileIO2 support:
+===============================================================================#
+#	-Deactivated to avoid un-necessary dependency (at this point).
+#	-TODO: Re-activate once FileIO2 is registered?
+
+using FileIO2
+
+#Declare file formats (Not exported):
+abstract GraceFmt <: FileIO2.DataFormat #Grace plot file
+abstract ParamFmt <: FileIO2.DataFormat #Grace "parameter" (.par template) format
+
+#Could also define shorthand:
+#FileIO2.File(::FileIO2.Shorthand{:grace}, path::AbstractString) = File{GraceFmt}(path)
+#FileIO2.File(::FileIO2.Shorthand{:graceparam}, path::AbstractString) = File{ParamFmt}(path)
+
+#Typed _write interface:
+#_write(file::File{ParamFmt}, p::Plot) = #TODO: Is there a way to write .par files?
+_write(file::File{GraceFmt}, p::Plot) = _write(path::AbstractString, p::Plot)
+_write(file::File{PNGFmt}, p::Plot) = write_png(path::AbstractString, p::Plot)
+_write(file::File{SVGFmt}, p::Plot) = write_svg(path::AbstractString, p::Plot)
+_write(file::File{EPSFmt}, p::Plot) = write_eps(path::AbstractString, p::Plot)
+=#
 
 #Last line
