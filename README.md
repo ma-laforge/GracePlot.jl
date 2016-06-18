@@ -1,10 +1,16 @@
 # GracePlot.jl
 
+[![Build Status](https://travis-ci.org/ma-laforge/GracePlot.jl.svg?branch=master)](https://travis-ci.org/ma-laforge/GracePlot.jl)
+
 [Sample Plots](https://github.com/ma-laforge/FileRepo/tree/master/GracePlot/sampleplots/README.md) (might be out of date).<br>
 
 ## Description
 
 The GracePlot.jl module is a simple control interface for Grace/xmgrace - providing more publication-quality plotting facilities to Julia.
+
+ - GracePlot.jl is ideal for seeding a Grace session with plot data before fine-tuning the output with Grace itself.
+ - Grace "templates" (.par) files can then be saved/re-loaded to maintain a uniform appearance in publication.
+ - The user is encouraged to pre-process data using math facilities from Julia instead of those built-in to Grace.
 
 ## Samples
 
@@ -12,7 +18,12 @@ The [sample](sample/) directory contains a few demonstrations on how to use Grac
 
 The [template](sample/template/) directory contains a repository of sample Grace template (parameter) files.
 
-A few [sample plots](https://github.com/ma-laforge/FileRepo/tree/master/GracePlot/sampleplots/) are included in a separate repository.
+## Installation
+
+The GracePlot.jl module requires the user to install the Grace plotting tool:<br>
+<http://plasma-gate.weizmann.ac.il/Grace/>
+
+More detailed instructions can be found [here](https://github.com/ma-laforge/HowTo/blob/master/grace/grace_install.md#Installation)
 
 ## Configuration
 
@@ -22,12 +33,38 @@ The value of `GRACEPLOT_COMMAND` can therefore be set from `.juliarc.jl` with th
 
 	ENV["GRACEPLOT_COMMAND"] = "/home/laforge/bin/xmgrace2"
 
-## Dependencies
+## Select Documentation
 
-The GracePlot.jl module requires the following software/modules:
+### Axes
 
- - The Julia Language <http://julialang.org/>
- - Grace/xmgrace: 2D Plotting Tool <http://plasma-gate.weizmann.ac.il/Grace/>
+Objects describing axis types are created with the `axes` function:
+```
+log_lin = axes(xscale = :log, yscale = :lin)
+```
+**Supported scales:** `:lin`, `:log`, `:reciprocal`.
+
+The `axes` function also allows the user to specify axis ranges:
+```
+ax_rng = axes(xmin = 0.1, xmax = 1000, ymin = 1000, ymax = 5000)
+```
+
+### Line Style
+
+Objects describing line style are created with the `line` function:
+```
+default_line = line(style=:ldash, width=8, color=1)
+```
+
+**Supported styles:** `:none`, `:solid`, `:dot`, `:dash`, `:ldash`, `:dotdash`, `:dotldash`, `:dotdotdash`, `:dotdashdash`.
+
+### Glyphs
+
+Objects describing display glyphs (markers/symbols) are created with the `glyph` function:
+```
+glyph(shape=:diamond, color=5)
+```
+
+**Supported shapes:** `:circle`, `:o`, `:square`, `:diamond`, `:uarrow`, `:larrow`, `:darrow`, `:rarrow`, `:cross`, `:+`, `:diagcross`, `:x`, `:star`, `:*`, `:char` (see demo2 for use of `:char`).
 
 ## Known Limitations
 
@@ -44,6 +81,10 @@ GracePlot.jl will post-process SVG files in an attempt to support the W3C 1999 s
 
 The EPS format is therefore suggested if high-quality vector plots are desired.
 
+### Crashes
+
+The ARRANGE command appears to cause [crashes/logouts](CrashIssues.md) on certain Linux installs with relatively high occurance.
+
 ### Compatibility
 
 Extensive compatibility testing of GracePlot.jl has not been performed.  The module has been tested using the following environment(s):
@@ -52,6 +93,4 @@ Extensive compatibility testing of GracePlot.jl has not been performed.  The mod
 
 ## Disclaimer
 
-The GracePlot.jl module is not yet mature.  Expect significant changes.
-
-This software is provided "as is", with no guarantee of correctness.  Use at own risk.
+The GracePlot.jl API is not perfect.  Backward compatibility issues are to be expected as the module matures.
