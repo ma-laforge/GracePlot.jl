@@ -1,8 +1,14 @@
+# :art: Galleries (Sample Output) :art:
+
+[:chart_with_upwards_trend: Sample plots](https://github.com/ma-laforge/FileRepo/tree/master/GracePlot/sampleplots/README.md) (might be out of date).
+
+**Generated With Other Modules:**
+
+ - [:satellite: SignalProcessing.jl](https://github.com/ma-laforge/FileRepo/tree/master/SignalProcessing/sampleplots/grace_old/README.md) (Using EasyPlotGrace.jl; See [CData.jl](https://github.com/ma-laforge/CData.jl) for details.  Likely out of date.)
+
 # GracePlot.jl
 
 [![Build Status](https://travis-ci.org/ma-laforge/GracePlot.jl.svg?branch=master)](https://travis-ci.org/ma-laforge/GracePlot.jl)
-
-[Sample Plots](https://github.com/ma-laforge/FileRepo/tree/master/GracePlot/sampleplots/README.md) (might be out of date).<br>
 
 ## Description
 
