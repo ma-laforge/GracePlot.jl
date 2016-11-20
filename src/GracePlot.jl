@@ -7,7 +7,7 @@ module GracePlot
 const rootpath = realpath(joinpath(dirname(realpath(@__FILE__)),"../."))
 
 #Convenient accessor for sample GracePlot template (parameter) files:
-template(name::AbstractString) =
+template(name::String) =
 	joinpath(GracePlot.rootpath, "sample", "template", "$name.par")
 
 

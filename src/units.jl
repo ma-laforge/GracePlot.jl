@@ -49,9 +49,8 @@ Base.convert(::Type{TPoint}, x::Meter) = convert(TPoint, convert(Inch, x))
 TPoint(x::TPoint) = x
 Meter(x::Meter) = x
 Inch(x::Inch) = x
-TPoint(x) = convert(TPoint, x)
-Meter(x) = convert(Meter, x)
-Inch(x) = convert(Inch, x)
-
+TPoint(x::AbstractLength) = convert(TPoint, x)
+Meter(x::AbstractLength) = convert(Meter, x)
+Inch(x::AbstractLength) = convert(Inch, x)
 
 #end

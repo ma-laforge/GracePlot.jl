@@ -16,7 +16,7 @@ typealias AttributeFunctionMap Dict{Symbol, Function}
 typealias AttributeListFunctionMap ObjectIdDict #{DataType, Function}
 
 #Map attribute fields to grace commands:
-typealias AttributeCmdMap Dict{Symbol, AbstractString}
+typealias AttributeCmdMap Dict{Symbol, String}
 
 
 #==Helper functions
@@ -33,28 +33,28 @@ function copynew!{T<:AttributeList}(dest::T, newlist::T)
 	end
 end
 
-function setattrib(p::Plot, cmd::AbstractString, value::Any) #Catchall
+function setattrib(p::Plot, cmd::String, value::Any) #Catchall
 	sendcmd(p, "$cmd $value")
 end
-function setattrib(p::Plot, cmd::AbstractString, value::Void)
+function setattrib(p::Plot, cmd::String, value::Void)
 	#Nothing to do
 end
-function setattrib(p::Plot, cmd::AbstractString, value::AbstractString)
+function setattrib(p::Plot, cmd::String, value::String)
 	sendcmd(p, "$cmd \"$value\"") #Add quotes around string
 end
-function setattrib(p::Plot, cmd::AbstractString, value::GraceConstLitteral)
+function setattrib(p::Plot, cmd::String, value::GraceConstLitteral)
 	sendcmd(p, "$cmd $(value.s)") #Send associated string, unquoted
 end
-function setattrib(p::Plot, cmd::AbstractString, value::Tuple{Number, Number})
+function setattrib(p::Plot, cmd::String, value::Tuple{Number, Number})
 	v1 = value[1]; v2 = value[2]
 	sendcmd(p, "$cmd $v1, $v2") #Send out tuple
 end
-setattrib(p::Plot, cmd::AbstractString, value::Symbol) =
+setattrib(p::Plot, cmd::String, value::Symbol) =
 	setattrib(p, cmd, graceconstmap[value])
 
 #Set plot attributes for a given element:
 #-------------------------------------------------------------------------------
-function setattrib(p::Plot, fmap::AttributeCmdMap, prefix::AbstractString, data::Any)
+function setattrib(p::Plot, fmap::AttributeCmdMap, prefix::String, data::Any)
 	for attrib in fieldnames(data)
 		v = getfield(data, attrib)
 
@@ -73,11 +73,11 @@ end
 
 #Set graph attributes for a given element:
 #-------------------------------------------------------------------------------
-function setattrib(g::GraphRef, fmap::AttributeCmdMap, prefix::AbstractString, data::Any)
+function setattrib(g::GraphRef, fmap::AttributeCmdMap, prefix::String, data::Any)
 	setactive(g)
 	return setattrib(g.plot, fmap, prefix, data)
 end
-function setattrib(g::GraphRef, prefix::AbstractString, value::AbstractString)
+function setattrib(g::GraphRef, prefix::String, value::String)
 	setactive(g)
 	return setattrib(g.plot, prefix, value)
 end
@@ -88,14 +88,14 @@ function setattrib(ds::DatasetRef, fmap::AttributeCmdMap, data::Any)
 	dsid = ds.id
 	setattrib(ds.graph, fmap, "S$dsid ", data)
 end
-function setattrib(ds::DatasetRef, cmd::AbstractString, value::AbstractString)
+function setattrib(ds::DatasetRef, cmd::String, value::String)
 	dsid = ds.id
 	setattrib(ds.graph, "S$dsid $cmd", value)
 end
 
 #Core algorithm for "set" interface:
 #-------------------------------------------------------------------------------
-function set(obj::Any, listfnmap::AttributeListFunctionMap, fnmap::AttributeFunctionMap, args...; kwargs...)
+function _set(obj::Any, listfnmap::AttributeListFunctionMap, fnmap::AttributeFunctionMap, args...; kwargs...)
 	for value in args
 		setfn = get(listfnmap, typeof(value), nothing)
 
@@ -140,7 +140,7 @@ end
 #(Just use set in the background... it does what you would want...)
 #-------------------------------------------------------------------------------
 function addannotation(obj::Any, listfnmap::AttributeListFunctionMap, fnmap::AttributeFunctionMap, args...; kwargs...)
-	return set(obj::Any, listfnmap, fnmap, args...; kwargs...)
+	return _set(obj::Any, listfnmap, fnmap, args...; kwargs...)
 end
 
 #==Plot-level functionality
@@ -347,7 +347,7 @@ end
 
 #NOTE: AUTOSCALE X/Y does not seem to work...
 #-------------------------------------------------------------------------------
-function autofit(g::GraphRef; x=false, y=false)
+function _autofit(g::GraphRef, x::Bool=false, y::Bool=false)
 	cmd = "AUTOSCALE"
 	if x && y
 		; #Send command by itself
@@ -362,7 +362,10 @@ function autofit(g::GraphRef; x=false, y=false)
 	setactive(g)
 	sendcmd(g.plot, cmd)
 end
-autofit(g::GraphRef) = autofit(g, x=true, y=true)
+_autofit(g::GraphRef, x::Void, y::Void) = _autofit(g, true, true)
+_autofit(g::GraphRef, x::Void, y::Bool) = _autofit(g, false, y)
+_autofit(g::GraphRef, x::Bool, y::Void) = _autofit(g, x, false)
+autofit(g::GraphRef; x=nothing, y=nothing) = _autofit(g, x, y)
 
 #-------------------------------------------------------------------------------
 const limits_attribcmdmap = AttributeCmdMap(
@@ -384,8 +387,8 @@ const title_attribcmdmap = AttributeCmdMap(
 
 settitle(g::GraphRef, a::TextAttributes) = setattrib(g, title_attribcmdmap, "TITLE ", a)
 setsubtitle(g::GraphRef, a::TextAttributes) = setattrib(g, title_attribcmdmap, "SUBTITLE ", a)
-settitle(g::GraphRef, title::AbstractString) = settitle(g, text(title))
-setsubtitle(g::GraphRef, title::AbstractString) = setsubtitle(g, text(title))
+settitle(g::GraphRef, title::String) = settitle(g, text(title))
+setsubtitle(g::GraphRef, title::String) = setsubtitle(g, text(title))
 
 #-------------------------------------------------------------------------------
 const label_attribcmdmap = AttributeCmdMap(
@@ -397,8 +400,8 @@ const label_attribcmdmap = AttributeCmdMap(
 
 setxlabel(g::GraphRef, a::TextAttributes) = setattrib(g, title_attribcmdmap, "XAXIS LABEL ", a)
 setylabel(g::GraphRef, a::TextAttributes) = setattrib(g, title_attribcmdmap, "YAXIS LABEL ", a)
-setxlabel(g::GraphRef, label::AbstractString) = setxlabel(g, text(label))
-setylabel(g::GraphRef, label::AbstractString) = setylabel(g, text(label))
+setxlabel(g::GraphRef, label::String) = setxlabel(g, text(label))
+setylabel(g::GraphRef, label::String) = setylabel(g, text(label))
 
 #-------------------------------------------------------------------------------
 const frameline_attribcmdmap = AttributeCmdMap(
@@ -494,7 +497,7 @@ const glyph_attribcmdmap = AttributeCmdMap(
 )
 setglyph(ds::DatasetRef, a::GlyphAttributes) = setattrib(ds, glyph_attribcmdmap, a)
 
-setdatasetid(ds::DatasetRef, id::AbstractString) = setattrib(ds, "LEGEND", id)
+setdatasetid(ds::DatasetRef, id::String) = setattrib(ds, "LEGEND", id)
 
 #==Define cleaner "set" interface (minimize # of "export"-ed functions)
 ===============================================================================#
@@ -513,7 +516,7 @@ const setplot_fnmap = AttributeFunctionMap(
 	:active => setactive,
 	:focus  => setfocus,
 )
-set(p::Plot, args...; kwargs...) = set(p, setplot_listfnmap, setplot_fnmap, args...; kwargs...)
+set(p::Plot, args...; kwargs...) = _set(p, setplot_listfnmap, setplot_fnmap, args...; kwargs...)
 
 #-------------------------------------------------------------------------------
 const setgraph_listfnmap = AttributeListFunctionMap(
@@ -529,7 +532,7 @@ const setgraph_fnmap = AttributeFunctionMap(
 	:ylabel    => setylabel,
 	:frameline => setframeline,
 )
-set(g::GraphRef, args...; kwargs...) = set(g, setgraph_listfnmap, setgraph_fnmap, args...; kwargs...)
+set(g::GraphRef, args...; kwargs...) = _set(g, setgraph_listfnmap, setgraph_fnmap, args...; kwargs...)
 
 #-------------------------------------------------------------------------------
 const setds_listfnmap = AttributeListFunctionMap(
@@ -539,7 +542,7 @@ const setds_listfnmap = AttributeListFunctionMap(
 const setds_fnmap = AttributeFunctionMap(
 	:id => setdatasetid,
 )
-set(ds::DatasetRef, args...; kwargs...) = set(ds, setds_listfnmap, setds_fnmap, args...; kwargs...)
+set(ds::DatasetRef, args...; kwargs...) = _set(ds, setds_listfnmap, setds_fnmap, args...; kwargs...)
 
 #==Define cleaner "get" interface (minimize # of "export"-ed functions)
 ===============================================================================#

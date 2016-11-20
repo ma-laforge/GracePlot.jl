@@ -8,7 +8,7 @@
 #A constant litteral in grace...
 type GraceConstLitteral
 	#Basically just a string, but will not be surrounded with quotes when sent...
-	s::AbstractString
+	s::String
 end
 
 const graceconstmap = Dict{Symbol, GraceConstLitteral}(

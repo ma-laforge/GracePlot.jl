@@ -10,7 +10,7 @@ const DEFAULT_DPI = 200 #Reasonable all-purpose resolution
 #==Configuration
 ===============================================================================#
 type Config
-	command::AbstractString
+	command::String
 end
 
 function Config()
@@ -106,7 +106,7 @@ eval(genexpr_attriblistbuilder(:limits, CartesianLimAttributes)) #"limits" const
 #-------------------------------------------------------------------------------
 type TextAttributes <: AttributeList
 	#Common attributes
-	value::AbstractString
+	value::String
 	font
 	size
 	color
@@ -264,7 +264,7 @@ graphdata(g::GraphRef) = g.plot.graphs[graphindex(g)+1]
 
 #==Communication
 ===============================================================================#
-function sendcmd(p::Plot, cmd::AbstractString)
+function sendcmd(p::Plot, cmd::String)
 	write(p.pipe, cmd)
 	write(p.pipe, "\n")
 	if p.log; info("$cmd\n"); end
@@ -283,7 +283,7 @@ Base.close(p::Plot) = sendcmd(p, "EXIT")
 
 #Escape all quotes from a string expression.
 #-------------------------------------------------------------------------------
-escapequotes(s::AbstractString) = replace(s, r"\"", "\\\"")
+escapequotes(s::String) = replace(s, r"\"", "\\\"")
 
 
 #Last line
