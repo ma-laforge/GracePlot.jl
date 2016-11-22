@@ -139,7 +139,7 @@ end
 #Core algorithm for "addannotation" interface:
 #(Just use set in the background... it does what you would want...)
 #-------------------------------------------------------------------------------
-function addannotation(obj::Any, listfnmap::AttributeListFunctionMap, fnmap::AttributeFunctionMap, args...; kwargs...)
+function _addannotation(obj::Any, listfnmap::AttributeListFunctionMap, fnmap::AttributeFunctionMap, args...; kwargs...)
 	return _set(obj::Any, listfnmap, fnmap, args...; kwargs...)
 end
 
@@ -562,6 +562,6 @@ Base.get(p::Plot, attrib::Symbol) = getattrib(p, getplot_fnmap, attrib)
 const addannot_listfnmap = AttributeListFunctionMap(
 	TextAttributes  => addtext,
 )
-addannotation(p::Plot, args...; kwargs...) = addannotation(p, addannot_listfnmap, empty_fnmap, args...; kwargs...)
+addannotation(p::Plot, args...; kwargs...) = _addannotation(p, addannot_listfnmap, empty_fnmap, args...; kwargs...)
 
 #Last line
