@@ -5,7 +5,7 @@
 ===============================================================================#
 
 #A type whose elements simply list valid attributes of a given object:
-abstract AttributeList
+abstract type AttributeList end
 
 
 #==Helper functions

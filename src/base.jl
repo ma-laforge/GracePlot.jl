@@ -25,10 +25,10 @@ const config = Config()
 ===============================================================================#
 
 #Data vector type (don't support complex numbers):
-typealias DataVec{T<:Real} Vector{T}
+const DataVec{T<:Real} = Vector{T}
 
 #Graph coordinate (zero-based):
-typealias GraphCoord Tuple{Int, Int}
+const GraphCoord = Tuple{Int, Int}
 
 #-------------------------------------------------------------------------------
 type Dataset

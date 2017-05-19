@@ -4,10 +4,10 @@
 
 #==Constants
 ===============================================================================#
-typealias MIMEpng MIME"image/png"
-#typealias MIMEsvg MIME"image/svg+xml"
-#typealias MIMEeps MIME"image/eps"
-#typealias MIMEpdf MIME"application/pdf"
+const MIMEpng = MIME"image/png"
+#const MIMEsvg = MIME"image/svg+xml"
+#const MIMEeps = MIME"image/eps"
+#const MIMEpdf = MIME"application/pdf"
 
 
 #==Helper functions
@@ -155,8 +155,8 @@ end
 using FileIO2
 
 #Declare file formats (Not exported):
-abstract GraceFmt <: FileIO2.DataFormat #Grace plot file
-abstract ParamFmt <: FileIO2.DataFormat #Grace "parameter" (.par template) format
+abstract type GraceFmt <: FileIO2.DataFormat end #Grace plot file
+abstract type ParamFmt <: FileIO2.DataFormat end #Grace "parameter" (.par template) format
 
 #Could also define shorthand:
 #FileIO2.File(::FileIO2.Shorthand{:grace}, path::String) = File{GraceFmt}(path)

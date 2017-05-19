@@ -16,10 +16,10 @@ const INCH_IN_POINTS = 72
 #==Type definitions
 ===============================================================================#
 
-abstract AbstractQuantity
+abstract type AbstractQuantity end
 val(x::AbstractQuantity) = x.v
 
-abstract AbstractLength <: AbstractQuantity
+abstract type AbstractLength <: AbstractQuantity end
 
 #Typographic (DTP) "point":
 immutable TPoint <: AbstractLength

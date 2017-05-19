@@ -7,8 +7,8 @@ using GracePlot
 #==Input data
 ===============================================================================#
 x=collect(-1:0.02:1).*pi
-y1 = sin(x)
-y2 = cos(x)
+y1 = sin.(x)
+y2 = cos.(x)
 
 
 #=="Defaults"

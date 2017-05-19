@@ -5,18 +5,18 @@
 ===============================================================================#
 
 #Map an individual attribute to a setter function:
-typealias AttributeFunctionMap Dict{Symbol, Function}
+const AttributeFunctionMap = Dict{Symbol, Function}
 
 #Map an "AttributeList" element to a setter function:
 #NOTE: Unlike individual attributes, typed obects do not need to be "set"
 #      using keyword arguments
 #TODO: Find way to restrict Dict to DataTypes inherited from AttributeList
-#typealias AttributeListFunctionMap Dict{DataType, Function}
+#const AttributeListFunctionMap = Dict{DataType, Function}
 #Use ObjectIdDict: Compatibility with precompile.
-typealias AttributeListFunctionMap ObjectIdDict #{DataType, Function}
+const AttributeListFunctionMap = ObjectIdDict #{DataType, Function}
 
 #Map attribute fields to grace commands:
-typealias AttributeCmdMap Dict{Symbol, String}
+const AttributeCmdMap = Dict{Symbol, String}
 
 
 #==Helper functions
