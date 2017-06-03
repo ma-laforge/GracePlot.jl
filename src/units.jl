@@ -22,15 +22,15 @@ val(x::AbstractQuantity) = x.v
 abstract type AbstractLength <: AbstractQuantity end
 
 #Typographic (DTP) "point":
-immutable TPoint <: AbstractLength
+struct TPoint <: AbstractLength
 	v::Number
 end
 
-immutable Inch <: AbstractLength
+struct Inch <: AbstractLength
 	v::Number
 end
 
-immutable Meter <: AbstractLength
+struct Meter <: AbstractLength
 	v::Number
 end
 

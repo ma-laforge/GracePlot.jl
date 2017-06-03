@@ -6,7 +6,7 @@
 ===============================================================================#
 
 #A constant litteral in grace...
-type GraceConstLitteral
+mutable struct GraceConstLitteral
 	#Basically just a string, but will not be surrounded with quotes when sent...
 	s::String
 end

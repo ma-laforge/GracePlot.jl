@@ -9,7 +9,7 @@ const DEFAULT_DPI = 200 #Reasonable all-purpose resolution
 
 #==Configuration
 ===============================================================================#
-type Config
+mutable struct Config
 	command::String
 end
 
@@ -31,27 +31,27 @@ const DataVec{T<:Real} = Vector{T}
 const GraphCoord = Tuple{Int, Int}
 
 #-------------------------------------------------------------------------------
-type Dataset
+mutable struct Dataset
 	x::DataVec
 	y::DataVec
 end
 
 #-------------------------------------------------------------------------------
-type Graph
+mutable struct Graph
 	datasetcount::Int
 
 	Graph() = new(0)
 end
 
 #-------------------------------------------------------------------------------
-type CanvasAttributes <: AttributeList
+mutable struct CanvasAttributes <: AttributeList
 	width::AbstractLength
 	height::AbstractLength
 end
 canvas(width::AbstractLength, height::AbstractLength) = CanvasAttributes(width, height)
 
 #-------------------------------------------------------------------------------
-type Plot
+mutable struct Plot
 	pipe::Base.Pipe
 	process::Base.Process
 	guimode::Bool
@@ -68,19 +68,19 @@ type Plot
 end
 
 #-------------------------------------------------------------------------------
-type GraphRef
+mutable struct GraphRef
 	plot::Plot
 	index::Int
 end
 
 #-------------------------------------------------------------------------------
-type DatasetRef
+mutable struct DatasetRef
 	graph::GraphRef
 	id::Int
 end
 
 #-------------------------------------------------------------------------------
-type DefaultAttributes <: AttributeList
+mutable struct DefaultAttributes <: AttributeList
 	linewidth
 	linestyle
 	color
@@ -97,14 +97,14 @@ end
 eval(genexpr_attriblistbuilder(:defaults, DefaultAttributes)) #"defaults" constructor
 
 #-------------------------------------------------------------------------------
-type CartesianLimAttributes <: AttributeList
+mutable struct CartesianLimAttributes <: AttributeList
 	xmin; xmax
 	ymin; ymax
 end
 eval(genexpr_attriblistbuilder(:limits, CartesianLimAttributes)) #"limits" constructor
 
 #-------------------------------------------------------------------------------
-type TextAttributes <: AttributeList
+mutable struct TextAttributes <: AttributeList
 	#Common attributes
 	value::String
 	font
@@ -119,7 +119,7 @@ end
 eval(genexpr_attriblistbuilder(:text, TextAttributes, reqfieldcnt=1)) #"text" constructor
 
 #-------------------------------------------------------------------------------
-type LineAttributes <: AttributeList
+mutable struct LineAttributes <: AttributeList
 	_type
 	style
 	width
@@ -129,7 +129,7 @@ end
 eval(genexpr_attriblistbuilder(:line, LineAttributes, reqfieldcnt=0)) #"line" constructor
 
 #-------------------------------------------------------------------------------
-type GlyphAttributes <: AttributeList #Don't use "Symbol" - name used by Julia
+mutable struct GlyphAttributes <: AttributeList #Don't use "Symbol" - name used by Julia
 	shape
 	size
 	color
@@ -145,7 +145,7 @@ end
 eval(genexpr_attriblistbuilder(:glyph, GlyphAttributes, reqfieldcnt=0)) #"glyph" constructor
 
 #-------------------------------------------------------------------------------
-type FrameAttributes <: AttributeList
+mutable struct FrameAttributes <: AttributeList
 	frametype
 	color
 	pattern
@@ -157,7 +157,7 @@ type FrameAttributes <: AttributeList
 end
 
 #-------------------------------------------------------------------------------
-type LegendAttributes <: AttributeList
+mutable struct LegendAttributes <: AttributeList
 	loctype #:view/world
 	loc #(x, y)
 
@@ -183,7 +183,7 @@ end
 eval(genexpr_attriblistbuilder(:legend, LegendAttributes)) #"legend" constructor
 
 #-------------------------------------------------------------------------------
-type AxesAttributes <: AttributeList
+mutable struct AxesAttributes <: AttributeList
 	xmin; xmax; ymin; ymax
 	xscale; yscale #:lin/:log/:reciprocal
 	invertx; inverty #:on/:off
@@ -191,7 +191,7 @@ end
 eval(genexpr_attriblistbuilder(:axes, AxesAttributes, reqfieldcnt=0)) #"axes" constructor
 
 #-------------------------------------------------------------------------------
-type AxisTickAttributes <: AttributeList #???
+mutable struct AxisTickAttributes <: AttributeList #???
 	majorspacing
 	minortickcount
 	placeatrounded
@@ -201,7 +201,7 @@ end
 
 #Properties for Major/Minor ticks:???
 #-------------------------------------------------------------------------------
-type TickAttributes <: AttributeList
+mutable struct TickAttributes <: AttributeList
 	size
 	color
 	linewidth
