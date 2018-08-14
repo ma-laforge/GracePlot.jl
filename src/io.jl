@@ -16,7 +16,7 @@ const MIMEpng = MIME"image/png"
 #(Writing files with grace is a non-blocking operation.)
 #timeout in seconds
 function openreadafterexport(p::Plot, filepath::String; timeout=15)
-	const poll_interval = .1 #sec
+	poll_interval = .1 #WANTCONST sec
 	timeout = timeout*1_000_000_000
 	flushpipe(p) #Make sure last write operation is registered with Grace.
 	tstart = time_ns()
@@ -68,7 +68,7 @@ end
 #Write plot to Grace .agr file:
 #-------------------------------------------------------------------------------
 function _write(path::String, p::Plot)
-	_ensure(!contains(path, "\""), ArgumentError("File path contains '\"'."))
+	_ensure(!occursin(path, "\""), ArgumentError("File path contains '\"'."))
 	sendcmd(p, "SAVEALL \"$path\"")
 	flushpipe(p)
 end
@@ -86,11 +86,11 @@ function _write_png(path::String, p::Plot, dpi::Int)
 	sendcmd(p, "DEVICE \"PNG\" PAGE SIZE $w, $h")
 	exportplot(p, "PNG", path)
 end
-_write_png(path::String, p::Plot, ::Void) =
+_write_png(path::String, p::Plot, ::Nothing) =
 	_write_png(path, p, p.dpi) #Use dpi setting in plot
 
 #User-level wrapper function:
-write_png(path::String, p::Plot; dpi::Union{Int,Void}=nothing) =
+write_png(path::String, p::Plot; dpi::Union{Int,Nothing}=nothing) =
 	_write_png(path, p, dpi)
 
 #Write to EPS:
@@ -111,18 +111,18 @@ function write_svg(path::String, p::Plot)
 	#NOTE: Is this the 2001 format?  Most programs do not appear to read it.
 
 	src = openreadafterexport(p, tmpfilepath)
-	filedat = readstring(src)
+	filedat = read(src, String)
 	close(src)
 
 	#Remove <!DOCTYPE svg ...> statement:
 	pat = r"^[ \t]*<!DOCTYPE svG.*$"mi
-	filedat = replace(filedat, pat, "")
+	filedat = replace(filedat, pat => "")
 
 	#Modify <svg ...> statement:
 	pat = r"(^[ \t]*<svg) xml:space=\"preserve\" (.*$)"mi
 	captures = match(pat, filedat).captures
 	cap1 = captures[1]; cap2 = captures[2]
-	filedat = replace(filedat, pat, "$cap1 xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" $cap2")
+	filedat = replace(filedat, pat => "$cap1 xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" $cap2")
 
 	dest = open(path, "w")
 	write(dest, filedat)
@@ -134,7 +134,7 @@ end
 
 #==MIME support
 ===============================================================================#
-function Base.show(io::IO, ::MIMEpng, p::Plot; dpi::Union{Int,Void}=nothing)
+function Base.show(io::IO, ::MIMEpng, p::Plot; dpi::Union{Int,Nothing}=nothing)
 	tmpfile = "$(tempname())_export.png"
 	_write_png(tmpfile, p, dpi)
 	flushpipe(p)

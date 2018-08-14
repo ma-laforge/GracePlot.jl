@@ -28,8 +28,8 @@ refsize = 20e-2 #Reference: 20cm canvas
 #==Position calculations
 ===============================================================================#
 function graph_position(row, col) #0-based row/col
-	const (w, h) = ((wpage-Δxlegend)/ncols, hpage/nrows) #Graph  w/h
-	const (xstart, ystart) = (w*col, hpage-h*(row+1))
+	(w, h) = ((wpage-Δxlegend)/ncols, hpage/nrows) #WANTCONST Graph  w/h
+	(xstart, ystart) = (w*col, hpage-h*(row+1)) #WANTCONST 
 
 	return limits(
 		xmin = xstart+Δxmin, xmax = xstart+w-Δxmax,
@@ -51,6 +51,7 @@ plot = GracePlot.new(pdefaults, fixedcanvas=true)
 	@show w, h #Confirm canvas size
 
 #Add subplots:
+let g, y #HIDEWARN_0.7
 for gidx in 1:4
 g = add(plot, subtitle="Subplot $gidx")
 	row = div(gidx-1, ncols) #0-based
@@ -64,6 +65,7 @@ g = add(plot, subtitle="Subplot $gidx")
 	end
 
 	autofit(g)
+end
 end
 
 #Position legend:

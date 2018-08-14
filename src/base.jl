@@ -52,7 +52,6 @@ canvas(width::AbstractLength, height::AbstractLength) = CanvasAttributes(width, 
 
 #-------------------------------------------------------------------------------
 mutable struct Plot
-	pipe::Base.Pipe
 	process::Base.Process
 	guimode::Bool
 	dpi::Int #Default rendering resolution
@@ -213,24 +212,24 @@ end
 ===============================================================================#
 function new(args...; guimode::Bool=true, dpi::Int=DEFAULT_DPI,
 		fixedcanvas::Bool=true, template=nothing, emptyplot::Bool=true, kwargs...)
-	const defaultcanvasratio = 1.6 #Roughly golden ratio
+	defaultcanvasratio = 1.6 #WANTCONST Roughly golden ratio
 	basecmd = config.command
-	canvasarg = fixedcanvas? []: "-free"
+	canvasarg = fixedcanvas ? [] : "-free"
 		#-free: Stretch canvas to client area
-	templatearg = template!=nothing? ["-param" "$template"]: []
-	guiarg = guimode? []: "-hardcopy"
+	templatearg = template!=nothing ? ["-param" "$template"] : []
+	guiarg = guimode ? [] : "-hardcopy"
 	#Other switches:
 	#   -dpipe 0: STDIN; -pipe switch seems broken
 	cmd = `$basecmd -dpipe 0 -nosafe -noask $guiarg $canvasarg $templatearg`
-	(pipe, process) = open(cmd, "w")
+	process = open(cmd, "w")
 	activegraph = -1 #None active @ start
 
 	#Default width/height (32cm x 20cm - roughly golden ratio):
-	const c = 0.01 #centi
+	c = 0.01 #WANTCONST centi
 	h = 20c; w = h*defaultcanvasratio
 	ncols = 2 #Assume 2 graph columns, by default
 
-	plot = Plot(pipe, process, guimode, dpi, canvas(Meter(w), Meter(h)), ncols,
+	plot = Plot(process, guimode, dpi, canvas(Meter(w), Meter(h)), ncols,
 		Graph[Graph()], activegraph, false
 	)
 	#At this point, plot.canvas is still basically meaningless...
@@ -265,13 +264,13 @@ graphdata(g::GraphRef) = g.plot.graphs[graphindex(g)+1]
 #==Communication
 ===============================================================================#
 function sendcmd(p::Plot, cmd::String)
-	write(p.pipe, cmd)
-	write(p.pipe, "\n")
-	if p.log; info("$cmd\n"); end
+	write(p.process, cmd)
+	write(p.process, "\n")
+	if p.log; (@info("$cmd\n")); end
 end
 
 function flushpipe(p::Plot)
-	flush(p.pipe)
+	flush(p.process)
 end
 
 Base.close(p::Plot) = sendcmd(p, "EXIT")

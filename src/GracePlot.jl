@@ -1,6 +1,9 @@
 #GracePlot: Publication-quality plots through Grace/xmgrace
 #-------------------------------------------------------------------------------
-#__precompile__()
+#=
+TAGS:
+	#WANTCONST, HIDEWARN_0.7
+=#
 
 module GracePlot
 
@@ -9,6 +12,8 @@ const rootpath = realpath(joinpath(dirname(realpath(@__FILE__)),"../."))
 #Convenient accessor for sample GracePlot template (parameter) files:
 template(name::String) =
 	joinpath(GracePlot.rootpath, "sample", "template", "$name.par")
+
+import Base: axes #Creates AxesAttributes to modify axis
 
 
 #==Ensure interface (similar to assert)
@@ -51,7 +56,6 @@ export defaults #Creates DefaultAttributes to set default plot attributes
 export canvas #Creates CanvasAttributes to resize plot, etc
 export limits #Creates CartesianLimAttributes to set view, world, ...
 export text #Creates TextAttributes to set titles, etc
-export axes #Creates AxesAttributes to modify axis
 export line #Creates LineAttributes to modify line
 export glyph #Creates GlyphAttributes to modify glyph
 export legend #Creates LegendAttributes to edit legend

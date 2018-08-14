@@ -22,6 +22,7 @@ template = GracePlot.template("plot2x2thick_mono")
 ===============================================================================#
 plot = GracePlot.new(fixedcanvas=true, template=template)
 #Add 4 subplots:
+let g, ds #HIDEWARN_0.7
 for gidx in 0:3
 	g = add(plot, subtitle = titles[gidx+1])
 
@@ -31,6 +32,7 @@ for gidx in 0:3
 	end
 
 	autofit(g)
+end
 end
 
 #Finalize:

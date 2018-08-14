@@ -12,8 +12,8 @@ const AttributeFunctionMap = Dict{Symbol, Function}
 #      using keyword arguments
 #TODO: Find way to restrict Dict to DataTypes inherited from AttributeList
 #const AttributeListFunctionMap = Dict{DataType, Function}
-#Use ObjectIdDict: Compatibility with precompile.
-const AttributeListFunctionMap = ObjectIdDict #{DataType, Function}
+#Use IdDict: Compatibility with precompile.
+const AttributeListFunctionMap = IdDict #{DataType, Function}
 
 #Map attribute fields to grace commands:
 const AttributeCmdMap = Dict{Symbol, String}
@@ -23,7 +23,7 @@ const AttributeCmdMap = Dict{Symbol, String}
 ===============================================================================#
 
 #Copy in only attributes that are not "nothing" (thus "new"):
-function copynew!{T<:AttributeList}(dest::T, newlist::T)
+function copynew!(dest::T, newlist::T) where T<:AttributeList
 	for attrib in fieldnames(newlist)
 		v = getfield(newlist, attrib)
 
@@ -36,7 +36,7 @@ end
 function setattrib(p::Plot, cmd::String, value::Any) #Catchall
 	sendcmd(p, "$cmd $value")
 end
-function setattrib(p::Plot, cmd::String, value::Void)
+function setattrib(p::Plot, cmd::String, value::Nothing)
 	#Nothing to do
 end
 function setattrib(p::Plot, cmd::String, value::String)
@@ -55,7 +55,7 @@ setattrib(p::Plot, cmd::String, value::Symbol) =
 #Set plot attributes for a given element:
 #-------------------------------------------------------------------------------
 function setattrib(p::Plot, fmap::AttributeCmdMap, prefix::String, data::Any)
-	for attrib in fieldnames(data)
+	for attrib in fieldnames(typeof(data))
 		v = getfield(data, attrib)
 
 		if v != nothing
@@ -65,7 +65,7 @@ function setattrib(p::Plot, fmap::AttributeCmdMap, prefix::String, data::Any)
 				setattrib(p, "$prefix$subcmd", v)
 			else
 				dtype = typeof(data)
-				warn("Attribute \"$attrib\" of $dtype not currently supported.")
+				@warn("Attribute \"$attrib\" of $dtype not currently supported.")
 			end
 		end
 	end
@@ -104,7 +104,7 @@ function _set(obj::Any, listfnmap::AttributeListFunctionMap, fnmap::AttributeFun
 		else
 			argstr = string(typeof(value))
 			objtype = typeof(obj)
-			warn("Argument \"$argstr\" not recognized by \"set(::$objtype, ...)\"")
+			@warn("Argument \"$argstr\" not recognized by \"set(::$objtype, ...)\"")
 		end
 	end
 
@@ -116,7 +116,7 @@ function _set(obj::Any, listfnmap::AttributeListFunctionMap, fnmap::AttributeFun
 		else
 			argstr = string(arg)
 			objtype = typeof(obj)
-			warn("Argument \"$argstr\" not recognized by \"set(::$objtype, ...)\"")
+			@warn("Argument \"$argstr\" not recognized by \"set(::$objtype, ...)\"")
 		end
 	end
 	return
@@ -159,7 +159,7 @@ end
 function clearall(p::Plot; update::Bool=true, killdata::Bool=true)
 	#Delete graphs in reverse order
 	#(Grace wants to keep around lower numbered graphs)
-	for gidx in (length(p.graphs):-1:1)-1
+	for gidx in (length(p.graphs):-1:1) .- 1
 		clearall(graph(p, gidx), update=false, killdata=killdata)
 	end
 
@@ -321,7 +321,7 @@ end
 
 #-------------------------------------------------------------------------------
 function setenable(g::GraphRef, value::Bool)
-	v = graceconstmap[value? (:on) : (:off)]
+	v = graceconstmap[value ? (:on) : (:off)]
 	gidx = graphindex(g)
 	setattrib(g.plot, "G$gidx", v)
 end
@@ -362,9 +362,9 @@ function _autofit(g::GraphRef, x::Bool=false, y::Bool=false)
 	setactive(g)
 	sendcmd(g.plot, cmd)
 end
-_autofit(g::GraphRef, x::Void, y::Void) = _autofit(g, true, true)
-_autofit(g::GraphRef, x::Void, y::Bool) = _autofit(g, false, y)
-_autofit(g::GraphRef, x::Bool, y::Void) = _autofit(g, x, false)
+_autofit(g::GraphRef, x::Nothing, y::Nothing) = _autofit(g, true, true)
+_autofit(g::GraphRef, x::Nothing, y::Bool) = _autofit(g, false, y)
+_autofit(g::GraphRef, x::Bool, y::Nothing) = _autofit(g, x, false)
 autofit(g::GraphRef; x=nothing, y=nothing) = _autofit(g, x, y)
 
 #-------------------------------------------------------------------------------
