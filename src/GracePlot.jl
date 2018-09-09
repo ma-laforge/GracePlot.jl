@@ -1,5 +1,6 @@
 #GracePlot: Publication-quality plots through Grace/xmgrace
 #-------------------------------------------------------------------------------
+__precompile__(true)
 #=
 TAGS:
 	#WANTCONST, HIDEWARN_0.7
@@ -12,8 +13,6 @@ const rootpath = realpath(joinpath(dirname(realpath(@__FILE__)),"../."))
 #Convenient accessor for sample GracePlot template (parameter) files:
 template(name::String) =
 	joinpath(GracePlot.rootpath, "sample", "template", "$name.par")
-
-import Base: axes #Creates AxesAttributes to modify axis
 
 
 #==Ensure interface (similar to assert)
@@ -48,7 +47,7 @@ export set #Set Plot/Graph/Dataset properties
 #   set(::Plot, arg1, arg2, ..., kwarg1=v1, kwarg2=v1, ...)
 #      kwargs: active, focus,
 #   set(::GraphRef, arg1, arg2, ..., kwarg1=v1, kwarg2=v1, ...)
-#      args: axes()
+#      args: paxes()
 #      kwargs: title, subtitle, xlabel, ylabel, frameline
 #   set(::DatasetRef, arg1, arg2, ..., kwarg1=v1, kwarg2=v1, ...)
 #      args: line(), glyph()
@@ -58,6 +57,7 @@ export limits #Creates CartesianLimAttributes to set view, world, ...
 export text #Creates TextAttributes to set titles, etc
 export line #Creates LineAttributes to modify line
 export glyph #Creates GlyphAttributes to modify glyph
+export paxes #Creates AxesAttributes to modify axis (Bad idea to extend Base.axes: when defining zero-argument signature)
 export legend #Creates LegendAttributes to edit legend
 export addannotation
 

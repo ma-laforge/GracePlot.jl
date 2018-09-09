@@ -43,15 +43,15 @@ The value of `GRACEPLOT_COMMAND` can therefore be set from `.juliarc.jl` with th
 
 ### Axes
 
-Objects describing axis types are created with the `axes` function:
+Objects describing axis types are created with the `paxes` function:
 ```
-log_lin = axes(xscale = :log, yscale = :lin)
+log_lin = paxes(xscale = :log, yscale = :lin)
 ```
 **Supported scales:** `:lin`, `:log`, `:reciprocal`.
 
-The `axes` function also allows the user to specify axis ranges:
+The `paxes` function also allows the user to specify axis ranges:
 ```
-ax_rng = axes(xmin = 0.1, xmax = 1000, ymin = 1000, ymax = 5000)
+ax_rng = paxes(xmin = 0.1, xmax = 1000, ymin = 1000, ymax = 5000)
 ```
 
 ### Line Style

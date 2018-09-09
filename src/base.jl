@@ -187,7 +187,7 @@ mutable struct AxesAttributes <: AttributeList
 	xscale; yscale #:lin/:log/:reciprocal
 	invertx; inverty #:on/:off
 end
-eval(genexpr_attriblistbuilder(:axes, AxesAttributes, reqfieldcnt=0)) #"axes" constructor
+eval(genexpr_attriblistbuilder(:paxes, AxesAttributes, reqfieldcnt=0)) #"axes" constructor
 
 #-------------------------------------------------------------------------------
 mutable struct AxisTickAttributes <: AttributeList #???
