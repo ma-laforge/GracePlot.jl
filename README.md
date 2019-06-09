@@ -95,7 +95,7 @@ The ARRANGE command appears to cause [crashes/logouts](CrashIssues.md) on certai
 
 Extensive compatibility testing of GracePlot.jl has not been performed.  The module has been tested using the following environment(s):
 
- - Linux / Julia-0.7.0 / Grace-5.1.25.
+ - Linux / Julia-1.1.1 / Grace-5.1.25.
 
 ## Disclaimer
 
